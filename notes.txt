@@ -4,3 +4,114 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
+
+
+
+2. Setup prisma
+
+
+    🧩 Step 1: Install Prisma packages
+
+            npm install prisma@5.16.1 --save-dev
+            npm install @prisma/client@5.16.1
+
+
+            👉 Explanation:
+            prisma → CLI tool for schema, migrations, and code generation.
+            @prisma/client → The actual runtime client your code will import.
+
+    ⚙️ Step 2: Initialize Prisma in your project
+
+            npx prisma init
+
+
+            This command will:
+
+            ✅ Create a new folder prisma/
+            ✅ Add a schema.prisma file inside it
+            ✅ Create a .env file at your project root with:
+
+            DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
+    🧠 Step 3: Edit your .env
+
+            If using Neon, replace it with your real connection string:
+            DATABASE_URL="postgresql://<user>:<password>@<host>.neon.tech/<database>?sslmode=require"
+
+
+            Example:
+            DATABASE_URL="postgresql://bratati:secret@ep-cool-host.ap-southeast-1.aws.neon.tech/mydb?sslmode=require"
+    
+    🧱 Step 4: Define your Prisma schema
+
+            Open prisma/schema.prisma and modify like this:
+
+            generator client {
+                provider = "prisma-client-js"
+            }
+
+            datasource db {
+                provider = "postgresql"
+                url      = env("DATABASE_URL")
+            }
+
+            model User {
+                id        Int      @id @default(autoincrement())
+                email     String   @unique
+                name      String?
+                createdAt DateTime @default(now())
+            }
+
+
+    ⚡ Step 5: Run Migration
+            When you define or change models, run:
+
+            npx prisma migrate dev --name init
+
+
+            ✅ This will:
+
+            Create a new migration file under prisma/migrations/
+
+            Apply schema to your Neon database
+
+            Generate the Prisma client
+    
+    🧰 Step 6: Generate the client manually (optional)
+
+            If you ever need to regenerate Prisma client (after schema change):
+
+            npx prisma generate
+    
+    🧪 Step 7: Test your connection
+
+            Create a file test.js:
+
+            import { PrismaClient } from '@prisma/client';
+            const prisma = new PrismaClient();
+
+            async function main() {
+            const user = await prisma.user.create({
+                data: { email: 'hello@neon.tech', name: 'Neon User' },
+            });
+            console.log('Created user:', user);
+
+            const allUsers = await prisma.user.findMany();
+            console.log('All users:', allUsers);
+            }
+
+            main()
+            .catch(console.error)
+            .finally(async () => await prisma.$disconnect());
+
+
+            Run it:
+
+            node test.js
+
+
+            If it outputs your user data → ✅ You’re connected successfully to Neon via Prisma!
+
+
+
+
+
