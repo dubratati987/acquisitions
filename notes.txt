@@ -1,0 +1,6 @@
+1. npm i eslint @eslint/js prettier eslint-config-prettier -D
+
+"lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
