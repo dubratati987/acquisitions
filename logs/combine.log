@@ -1,0 +1,73 @@
+{"level":"info","message":"::1 - - [24/Oct/2025:07:54:34 +0000] \"GET / HTTP/1.1\" 200 24 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:07:54:34 +0000] \"GET /favicon.ico HTTP/1.1\" 200 24 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:07:55:34 +0000] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:07:55:34 +0000] \"GET /favicon.ico HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:07:56:41 +0000] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:07:56:41 +0000] \"GET /favicon.ico HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:07:56:43 +0000] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:07:56:43 +0000] \"GET /favicon.ico HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:18:35 +0000] \"GET /health HTTP/1.1\" 200 24 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:19:06 +0000] \"GET /api HTTP/1.1\" 200 24 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:19:10 +0000] \"GET /api HTTP/1.1\" 200 24 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:19:15 +0000] \"GET /health HTTP/1.1\" 200 24 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:19:56 +0000] \"GET /health HTTP/1.1\" 200 73 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:20:02 +0000] \"GET /api HTTP/1.1\" 404 142 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:20:17 +0000] \"GET /api HTTP/1.1\" 404 142 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:20:42 +0000] \"GET /api HTTP/1.1\" 200 41 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:21:38 +0000] \"GET / HTTP/1.1\" - - \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:21:57 +0000] \"GET / HTTP/1.1\" 200 24 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:22:01 +0000] \"GET /api HTTP/1.1\" 200 24 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"Hello from acquisition","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:22:07 +0000] \"GET /health HTTP/1.1\" 200 24 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:22:25 +0000] \"GET /health HTTP/1.1\" 200 73 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:24:36 +0000] \"GET /api/auth/sign-in HTTP/1.1\" 404 155 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:25:02 +0000] \"POST /api/auth/sign-up HTTP/1.1\" 200 32 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:25:23 +0000] \"POST /api/auth/sign-in HTTP/1.1\" 200 32 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:08:25:55 +0000] \"POST /api/auth/sign-out HTTP/1.1\" 200 33 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User registered successfully: abc@gmail.com","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:11:17:29 +0000] \"POST /api/auth/sign-up HTTP/1.1\" 200 96 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"error","message":"Error creating the ReferenceError: Cannot access 'newuser' before initialization","service":"acquisitions-api"}
+{"level":"error","message":"Signup error Cannot access 'newuser' before initialization","service":"acquisitions-api","stack":"ReferenceError: Cannot access 'newuser' before initialization\n    at createUser (file:///D:/study/kubernetes/test/acquisitions/src/services/auth.service.js:32:25)\n    at async signup (file:///D:/study/kubernetes/test/acquisitions/src/controllers/auth.controller.js:21:18)"}
+{"level":"info","message":"::1 - - [24/Oct/2025:12:59:24 +0000] \"POST /api/auth/sign-up HTTP/1.1\" 500 432 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User admin@gmail.com crated successfully","service":"acquisitions-api"}
+{"level":"info","message":"User registered successfully: admin@gmail.com","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:13:04:38 +0000] \"POST /api/auth/sign-up HTTP/1.1\" 200 100 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"error","message":"Error creating the Error: User already exists","service":"acquisitions-api"}
+{"level":"error","message":"Signup error User already exists","service":"acquisitions-api","stack":"Error: User already exists\n    at createUser (file:///D:/study/kubernetes/test/acquisitions/src/services/auth.service.js:20:29)\n    at async signup (file:///D:/study/kubernetes/test/acquisitions/src/controllers/auth.controller.js:21:18)"}
+{"level":"info","message":"::1 - - [24/Oct/2025:13:04:41 +0000] \"POST /api/auth/sign-up HTTP/1.1\" 500 389 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User admin@gmail.com crated successfully","service":"acquisitions-api"}
+{"level":"info","message":"User registered successfully: admin@gmail.com","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:13:05:24 +0000] \"POST /api/auth/sign-up HTTP/1.1\" 200 100 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User admin@gmail.com crated successfully","service":"acquisitions-api"}
+{"level":"info","message":"User registered successfully: admin@gmail.com","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:13:08:40 +0000] \"POST /api/auth/sign-up HTTP/1.1\" 200 101 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:15:21:17 +0000] \"POST /api/auth/sign-in HTTP/1.1\" 200 32 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User admin@gmail.com authenticated successfully","service":"acquisitions-api"}
+{"level":"error","message":"Sign In error res.cookie is not a function","service":"acquisitions-api","stack":"TypeError: res.cookie is not a function\n    at Object.set (file:///D:/study/kubernetes/test/acquisitions/src/utils/cookies.js:10:9)\n    at signIn (file:///D:/study/kubernetes/test/acquisitions/src/controllers/auth.controller.js:71:13)"}
+{"level":"info","message":"::1 - - [24/Oct/2025:15:21:55 +0000] \"POST /api/auth/sign-in HTTP/1.1\" 500 387 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User admin@gmail.com authenticated successfully","service":"acquisitions-api"}
+{"level":"info","message":"User signed in successfully admin@gmail.com","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:15:24:11 +0000] \"POST /api/auth/sign-in HTTP/1.1\" 200 113 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User admin@gmail.com authenticated successfully","service":"acquisitions-api"}
+{"level":"info","message":"User signed in successfully admin@gmail.com","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:15:24:12 +0000] \"POST /api/auth/sign-in HTTP/1.1\" 200 113 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User signed out successfully","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:15:30:11 +0000] \"POST /api/auth/sign-out HTTP/1.1\" 200 42 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User admin@gmail.com authenticated successfully","service":"acquisitions-api"}
+{"level":"info","message":"User signed in successfully admin@gmail.com","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:15:30:21 +0000] \"POST /api/auth/sign-in HTTP/1.1\" 200 113 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
+{"level":"info","message":"User signed out successfully","service":"acquisitions-api"}
+{"level":"info","message":"::1 - - [24/Oct/2025:15:30:35 +0000] \"POST /api/auth/sign-out HTTP/1.1\" 200 42 \"-\" \"PostmanRuntime/7.49.0\"","service":"acquisitions-api"}
