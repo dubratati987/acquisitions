@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRouter from '#routes/auth.routes.js';
+import userRouter from '#routes/user.routes.js';
 import securityMiddleware from '#middleware/security.middleware.js';
 
 const app = express();
@@ -37,5 +38,6 @@ app.get('/api', (req, res) => {
   res.status(200).json({ message: 'Acquisition API is running!' });
 });
 app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
 
 export default app;
