@@ -14,12 +14,15 @@
   },
   "scripts": {
     "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "npx prisma generate",
-    "db:migrate": "npx prisma migrate deploy --schema prisma/schema.prisma"
+    "db:migrate": "npx prisma migrate deploy --schema prisma/schema.prisma",
+    "dev:docker": "sh ./scripts/dev.sh",
+    "prod:docker": "sh ./scripts/prod.sh"
   },
   "keywords": [],
   "author": "",

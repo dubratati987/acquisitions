@@ -85,6 +85,10 @@
             If you ever need to regenerate Prisma client (after schema change):
 
             npx prisma generate
+
+            or
+
+            npx prisma generate --schema=./prisma/schema.prisma
     
     🧪 Step 7: Test your connection
 
