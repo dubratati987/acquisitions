@@ -120,6 +120,28 @@
             If it outputs your user data → ✅ You’re connected successfully to Neon via Prisma!
 
 
+3. Setup test
 
+    npm install --save-dev jest
+    npm install --save-dev supertest
+    npm install --save-dev cross-env
+
+    npm init jest@latest
+
+    package.json
+    ------------
+    "imports": {
+        "#src/*: "./src/*"
+        .
+        .
+        .
+    },
+    "scripts": {
+        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+    }
+
+    jest.config.mjs
+    ---------------
+    testEnvironment: "node",
 
 

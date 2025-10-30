@@ -4,6 +4,7 @@
   "main": "index.js",
   "type": "module",
   "imports": {
+    "#src/*": "./src/*",
     "#config/*": "./src/config/*",
     "#controllers/*": "./src/controllers/*",
     "#middleware/*": "./src/middleware/*",
@@ -22,7 +23,8 @@
     "db:generate": "npx prisma generate",
     "db:migrate": "npx prisma migrate deploy --schema prisma/schema.prisma",
     "dev:docker": "sh ./scripts/dev.sh",
-    "prod:docker": "sh ./scripts/prod.sh"
+    "prod:docker": "sh ./scripts/prod.sh",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [],
   "author": "",
@@ -46,9 +48,12 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.2.0",
     "prettier": "^3.6.2",
-    "prisma": "^5.16.1"
+    "prisma": "^5.16.1",
+    "supertest": "^7.1.4"
   }
 }
