@@ -32,7 +32,7 @@ app.get('/health', (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    modifiedBy: 'Bratati',
+    modifiedBy: 'Bratati Dutta',
   });
 });
 app.get('/api', (req, res) => {
