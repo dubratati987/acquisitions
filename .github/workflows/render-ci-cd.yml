@@ -2,7 +2,7 @@ name: CI/CD Pipeline (Render + Node.js)
 
 on:
   push:
-    branches: [main, dev] # Deploy only these branches
+    branches: [main, dev] # Deploy only these branches, no other branches
 
 jobs:
   build-test-deploy:
