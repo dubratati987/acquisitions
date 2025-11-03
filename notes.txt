@@ -8,6 +8,7 @@
 
 
 2. Setup prisma
+    Note: First prepare postgress in neondb (https://console.neon.tech/)
 
 
     🧩 Step 1: Install Prisma packages
