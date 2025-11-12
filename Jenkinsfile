@@ -76,12 +76,24 @@ pipeline {
                 url: 'https://github.com/dubratati987/acquisitions.git'
             }
         }
-        // stage('Prepare .env') {
-        //   steps {
 
-        //   }
 
-        // }
+        stage('Prepare .env') {
+          steps {
+            withCredentials([string(credentialsId: 'accquisition-env-file', variable: 'ENV_CONTENT')]) {
+                writeFile file: '.env.production', text: "${ENV_CONTENT}"
+                echo ".env.production file created"
+            }
+          }
+        }
+
+        stage('Build') {
+          steps {
+            script {
+              sh 'cat .env.production' // just for debugging
+            }
+          }
+        }
 
         // stage('Build Docker Image') {
         //     steps {
