@@ -162,21 +162,19 @@ pipeline {
 
         stage('Integration Tests') {
           steps {
+            echo '🧪 Running integration tests...'
             script {
+              // Create a test task
               sh '''
-                echo "Creating test user..."
-                RANDOM_EMAIL="jenkins_test_${RANDOM}@example.com"
-                echo "Generated email: $RANDOM_EMAIL"
-
-                curl -X POST http://host.docker.internal:3000/api/auth/sign-up \
-                  -H "Content-Type: application/json" \
-                  -d "{\"name\":\"Jenkins CI Test\",\"email\":\"$RANDOM_EMAIL\",\"password\":\"123456\"}" \
-                  -f || exit 1
+              echo "Creating test task..."
+              curl -X POST http://host.docker.internal:3000/api/auth/sign-up \
+              -H "Content-Type: application/json" \
+              -d '{"name": "Jenkins CI Test Task", "email": "bratati3@yahoo.co.in", "password": "123456"}' \
+              -f || exit 1
               '''
             }
           }
         }
-
 
         stage('Performance Check') {
           steps {
