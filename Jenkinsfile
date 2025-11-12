@@ -182,9 +182,9 @@ pipeline {
             script {
               // Simple response time check
               sh '''
-                echo "Checking API response time..."
-                time curl -s http://host.docker.internal:3000/api/users > /dev/null
+              curl -w "⏱ Time: %{time_total}s\\n" -o /dev/null -s http://host.docker.internal:3000/api/users
               '''
+
             }
           }
         }
