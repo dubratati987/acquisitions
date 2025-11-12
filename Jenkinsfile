@@ -97,15 +97,15 @@ pipeline {
             }
         }
 
-        stage('Generate Prisma Client') {
-            steps {
-                echo '📦 Generating Prisma client inside container...'
-                script {
-                    // Run Prisma generate inside the app container
-                    sh 'docker compose -f docker-compose.prod.yml run --rm app npx prisma generate'
-                }
-            }
-        }
+        // stage('Generate Prisma Client') {
+        //     steps {
+        //         echo '📦 Generating Prisma client inside container...'
+        //         script {
+        //             // Run Prisma generate inside the app container
+        //             sh 'docker compose -f docker-compose.prod.yml run --rm app npx prisma generate'
+        //         }
+        //     }
+        // }
 
         stage('Start Application Services') {
           steps {
