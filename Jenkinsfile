@@ -157,7 +157,25 @@ pipeline {
               """
             }
           }
-        } 
+        }
+
+
+        stage('Integration Tests') {
+          steps {
+            echo '🧪 Running integration tests...'
+            script {
+              // Create a test task
+              sh '''
+              echo "Creating test task..."
+              curl -X POST http://host.docker.internal:3000/api/users \
+              -H "Content-Type: application/json" \
+              -d '{"title": "Jenkins CI Test Task", "completed": false}' \
+              -f || exit 1
+              '''
+            }
+          }
+        }
+ 
 
     }
 }
