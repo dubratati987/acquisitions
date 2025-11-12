@@ -41,25 +41,42 @@ pipeline {
                 //    Jenkins automatically pulls GitHub repository
                 //    Shows commit hash and branch information
                 //    Sets up the workspace for building
-                script {
-                    echo "Building commit: ${env.GIT_COMMIT}"
-                    echo "Branch: ${env.GIT_BRANCH}"
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: '*/main']],
-                        doGenerateSubmoduleConfigurations: false,
-                        extensions: [],
-                        userRemoteConfigs: [[
-                            // url: 'git@github.com:dubratati987/acquisitions.git'
-                            url: 'https://github.com/dubratati987/acquisitions.git'
-                        ]]
-                    ])
 
-                }
-                // steps {
-                //   branch: 'main', url: 'https://github.com/dubratati987/acquisitions.git'
+                // use the lower-level checkout scm syntax for more control:
+                // script {
+                //     echo "Building commit: ${env.GIT_COMMIT}"
+                //     echo "Branch: ${env.GIT_BRANCH}"
+                //     checkout([
+                //         $class: 'GitSCM',
+                //         branches: [[name: '*/main']],
+                //         doGenerateSubmoduleConfigurations: false,
+                //         extensions: [],
+                //         userRemoteConfigs: [[
+                //             // url: 'git@github.com:dubratati987/acquisitions.git'
+                //             url: 'https://github.com/dubratati987/acquisitions.git'
+                //         ]]
+                //     ])
                 // }
 
+                // OR
+                // Shallow Clone for Faster Builds
+                // checkout([
+                //     $class: 'GitSCM',
+                //     branches: [[name: '*/main']],
+                //     extensions: [[$class: 'CloneOption', shallow: true, depth: 1]],
+                //     userRemoteConfigs: [[url: 'https://github.com/username/repository.git']]
+                // ])
+
+
+                // OR
+                // Checkout a public GitHub repo (no credentials needed)
+                // Scripted Pipeline (not Declarative)
+                git branch: 'main',
+                // credentialsId: 'my-github-token',
+                url: 'https://github.com/dubratati987/acquisitions.git'
+            }
+            steps {
+                  branch: 'main', url: 'https://github.com/dubratati987/acquisitions.git'
             }
         }
         // stage('Prepare .env') {
