@@ -35,9 +35,13 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 FROM base AS development
 USER root
 RUN npm ci && npm cache clean --force
+RUN npx prisma generate
 USER nodejs
 CMD [ "npm", "run", "dev" ]
 
 # Production stage
 FROM base as production
+USER root
+RUN npx prisma generate
+USER nodejs
 CMD [ "npm", "start" ]
