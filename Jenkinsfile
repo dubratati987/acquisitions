@@ -85,7 +85,7 @@ pipeline {
         stage('Prepare .env') {
           steps {
             withCredentials([string(credentialsId: 'accquisition-env-file', variable: 'ENV_CONTENT')]) {
-                writeFile file: '.env.production', text: "${ENV_CONTENT}"
+                writeFile file: "$GENERATED_ENV_FILE", text: "${ENV_CONTENT}"
                 echo ".env.production file created"
             }
           }
