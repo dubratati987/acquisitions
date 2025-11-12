@@ -87,21 +87,35 @@ pipeline {
           }
         }
 
-        stage('Build') {
+        
+        stage('Build Docker Image') {
+            steps {
+                echo 'Build Docker Image'
+                script {
+                    sh "docker compose -f docker-compose.prod.yml build --no-cache"
+                }
+            }
+        }
+
+        stage('Start Application Services') {
           steps {
+            echo '🚀 Starting accquisition application...'
             script {
-              sh 'cat .env.production' // just for debugging
+              // Start the complete application stack
+              sh "docker compose -f docker-compose.prod.yml up -d"
+
+              // Wait for services to be ready
+              echo "Waiting for services to start..."
+              sleep(time: 30, unit: "SECONDS")
+              
+              // Show running containers
+              sh '''
+                  docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+              '''
+              sh "npm run db:migrate"
             }
           }
         }
 
-        // stage('Build Docker Image') {
-        //     steps {
-        //         echo 'Build Docker Image'
-        //         script {
-        //             sh "docker compose -f docker-compose.prod.yml up -d --build"
-        //         }
-        //     }
-        // }
     }
 }
