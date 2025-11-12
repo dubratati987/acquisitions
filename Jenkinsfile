@@ -89,11 +89,14 @@ pipeline {
             //     echo ".env.production file created"
             // }
 
-            sh """
-                cp "$ENV_FILE" "$GENERATED_ENV_FILE"
-                echo ".env.production file created"
-                cat "$GENERATED_ENV_FILE"
-              """
+           
+            withCredentials([file(credentialsId: 'accquisition-env-file', variable: 'ENV_FILE')]) {
+               sh """
+                  cp "$ENV_FILE" "$GENERATED_ENV_FILE"
+                  echo ".env.production file created"
+                  cat "$GENERATED_ENV_FILE"
+                """
+            }
           }
         }
 
