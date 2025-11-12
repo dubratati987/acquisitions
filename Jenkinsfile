@@ -169,7 +169,7 @@ pipeline {
               echo "Creating test task..."
               curl -X POST http://host.docker.internal:3000/api/auth/sign-up \
               -H "Content-Type: application/json" \
-              -d '{"name": "Jenkins CI Test Task", "email": "bratati3@yahoo.co.in", "password": "123456"}' \
+              -d '{"name": "Jenkins CI Test Task", "email": "bratati4@yahoo.co.in", "password": "123456"}' \
               -f || exit 1
               '''
             }
