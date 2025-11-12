@@ -149,7 +149,7 @@ pipeline {
               // Test backend API
               echo "Testing backend API..."
               sh """
-                curl -f http://acquisitions-app-prod:3000/health || {
+                curl -f http://host.docker.internal:3000/health || {
                 echo '❌ Backend health check failed'
                 exit 1
                 }
