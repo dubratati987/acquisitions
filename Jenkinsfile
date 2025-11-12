@@ -107,15 +107,32 @@ pipeline {
               // Wait for services to be ready
               echo "Waiting for services to start..."
               sleep(time: 30, unit: "SECONDS")
-              
+
               // Show running containers
               sh '''
                   docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
               '''
-              sh "npm run db:migrate"
+              // sh "npm run db:migrate"
             }
           }
         }
+
+        stage('Health Check') {
+          steps {
+            echo '🩺 Running health checks...'
+            script {
+              // Test backend API
+              echo "Testing backend API..."
+              sh """
+                curl -f http://localhost:3000/health || {
+                echo '❌ Backend health check failed'
+                exit 1
+                }
+                echo '✅ Backend is healthy'
+              """
+            }
+          }
+        } 
 
     }
 }
