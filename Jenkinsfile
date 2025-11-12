@@ -183,7 +183,7 @@ pipeline {
               // Simple response time check
               sh '''
                 echo "Checking API response time..."
-                time curl -s http://host.docker.internal:3000/api/users &gt; /dev/null
+                time curl -s http://host.docker.internal:3000/api/users > /dev/null
               '''
             }
           }
@@ -191,5 +191,45 @@ pipeline {
 
  
 
+    }
+
+    post {
+      always {
+        echo '🧹 Cleaning up resources...'
+        script {
+          // Always clean up, regardless of build result
+          sh '''
+          echo "Stopping application containers..."
+          docker compose down || true
+          echo "Removing test containers..."
+          docker rm -f $(docker ps -aq --filter "label=jenkins-test") || true
+          echo "Cleaning up unused images..."
+          docker image prune -f || true
+          '''
+        }
+      }
+
+      success {
+        echo '✅ Pipeline completed successfully!'
+        script {
+          // Additional success actions
+          sh 'echo "Build #${BUILD_NUMBER} succeeded at $(date)"'
+        }
+      }
+
+      failure {
+        echo '❌ Pipeline failed!'
+        script {
+          // Capture logs for debugging
+          sh '''
+          echo "Capturing container logs for debugging..."
+          docker compose logs || true
+          '''
+        }
+      }
+
+      unstable {
+        echo '⚠️ Pipeline completed with warnings'
+      }
     }
 }
