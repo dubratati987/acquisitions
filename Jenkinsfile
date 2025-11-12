@@ -163,16 +163,14 @@ pipeline {
         stage('Integration Tests') {
           steps {
             echo '🧪 Running integration tests...'
-            RANDOM_EMAIL="jenkins_test_$(date +%s%N)@example.com"
             script {
               // Create a test task
               sh '''
                 echo "Creating test user..."
-                RANDOM_EMAIL="jenkins_test_$(date +%s%N)@example.com"
-                echo "Generated email: $RANDOM_EMAIL"
+                RANDOM_EMAIL="jenkins_test_${RANDOM}@example.com"
                 curl -X POST http://host.docker.internal:3000/api/auth/sign-up \
                   -H "Content-Type: application/json" \
-                  -d "{\"name\": \"Jenkins CI Test\", \"email\": \"${RANDOM_EMAIL}\", \"password\": \"123456\"}" \
+                  -d "{\"name\": \"Jenkins CI Test User\", \"email\": \"${RANDOM_EMAIL}\", \"password\": \"123456\"}" \
                   -f || exit 1
               '''
             }
