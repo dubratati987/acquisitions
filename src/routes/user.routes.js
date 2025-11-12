@@ -9,7 +9,7 @@ import { authenticateToken, requireRole } from '#middleware/auth.middleware.js';
 
 const userRouter = express.Router();
 
-userRouter.get('/', fetchAllUsers); // authenticateToken,
+userRouter.get('/', authenticateToken, fetchAllUsers);
 userRouter.get('/:id', authenticateToken, fetchUserById);
 userRouter.put('/:id', authenticateToken, updateUserById);
 userRouter.delete(
