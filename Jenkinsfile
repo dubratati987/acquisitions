@@ -75,9 +75,6 @@ pipeline {
                 // credentialsId: 'my-github-token',
                 url: 'https://github.com/dubratati987/acquisitions.git'
             }
-            steps {
-                  branch: 'main', url: 'https://github.com/dubratati987/acquisitions.git'
-            }
         }
         // stage('Prepare .env') {
         //   steps {
