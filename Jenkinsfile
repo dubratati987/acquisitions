@@ -165,14 +165,16 @@ pipeline {
             echo '🧪 Running integration tests...'
             script {
               // Create a test task
-              sh """
+              sh '''
                 echo "Creating test user..."
-                RANDOM_EMAIL="jenkins_test_${RANDOM}@example.com"
+                RANDOM_EMAIL="jenkins_test_\\${RANDOM}@example.com"
+                echo "Generated email: $RANDOM_EMAIL"
+
                 curl -X POST http://host.docker.internal:3000/api/auth/sign-up \
                   -H "Content-Type: application/json" \
-                  -d "{\"name\": \"Jenkins CI Test User\", \"email\": \"${RANDOM_EMAIL}\", \"password\": \"123456\"}" \
+                  -d "{\\\"name\\\":\\\"Jenkins CI Test\\\",\\\"email\\\":\\\"${RANDOM_EMAIL}\\\",\\\"password\\\":\\\"123456\\\"}" \
                   -f || exit 1
-              """
+              '''
             }
           }
         }
