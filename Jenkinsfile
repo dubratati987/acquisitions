@@ -169,12 +169,26 @@ pipeline {
               echo "Creating test task..."
               curl -X POST http://host.docker.internal:3000/api/auth/sign-up \
               -H "Content-Type: application/json" \
-              -d '{"name": "Jenkins CI Test Task", "email": "bratati@yahoo.co.in", "password": "123456"}' \
+              -d '{"name": "Jenkins CI Test Task", "email": "bratati1@yahoo.co.in", "password": "123456"}' \
               -f || exit 1
               '''
             }
           }
         }
+
+        stage('Performance Check') {
+          steps {
+            echo '⚡ Running basic performance checks...'
+            script {
+              // Simple response time check
+              sh '''
+                echo "Checking API response time..."
+                time curl -s http://host.docker.internal:3000/api/users &gt; /dev/null
+              '''
+            }
+          }
+        }
+
  
 
     }
