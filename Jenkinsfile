@@ -4,6 +4,10 @@ pipeline {
     environment {
         DOCKER_IMAGE_NAME = 'dubratati987/docker-acquisitions'
         DOCKER_LATEST_TAG = 'jenkins'
+
+        // Environment file
+        WORKSPACE_PATH = "${env.WORKSPACE}"
+        GENERATED_ENV_FILE = "${env.WORKSPACE}/.env.production"
     }
 
     stages {
@@ -97,15 +101,17 @@ pipeline {
             }
         }
 
-        // stage('Generate Prisma Client') {
-        //     steps {
-        //         echo '📦 Generating Prisma client inside container...'
-        //         script {
-        //             // Run Prisma generate inside the app container
-        //             sh 'docker compose -f docker-compose.prod.yml run --rm app npx prisma generate'
-        //         }
-        //     }
-        // }
+        stage('Generate Prisma Client') {
+            steps {
+                echo '📦 Generating Prisma client inside container...'
+                script {
+                    // Run Prisma generate inside the app container
+                    sh """
+                        docker compose --env-file "$GENERATED_ENV_FILE" -f docker-compose.prod.yml run --rm app npx prisma generate
+                      """
+                }
+            }
+        }
 
         stage('Start Application Services') {
           steps {
