@@ -1,5 +1,12 @@
 pipeline {
-  agent any
+  // agent any
+
+  agent {
+    docker {
+      image 'node:18-alpine'
+      args '-u root:root -v /var/jenkins_home:/var/jenkins_home'
+    }
+  }
 
   environment {
     DOCKER_IMAGE_NAME  = 'dubratati987/docker-acquisitions'
