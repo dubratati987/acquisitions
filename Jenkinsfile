@@ -1,235 +1,248 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        DOCKER_IMAGE_NAME = 'dubratati987/docker-acquisitions'
-        DOCKER_LATEST_TAG = 'jenkins'
+  environment {
+    DOCKER_IMAGE_NAME = 'dubratati987/docker-acquisitions'
+    DOCKER_LATEST_TAG = 'jenkins'
+    WORKSPACE_PATH     = "${env.WORKSPACE}"
+    GENERATED_ENV_FILE = "${env.WORKSPACE}/.env.production"
 
-        // Environment file
-        WORKSPACE_PATH = "${env.WORKSPACE}"
-        GENERATED_ENV_FILE = "${env.WORKSPACE}/.env.production"
-    }
+    // Set to 'true' to push multi-arch image to registry, otherwise 'false'
+    PUSH_IMAGE = 'true'
+    // DockerHub credential id (username/password). Replace if different.
+    DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
+  }
 
-    stages {
+  stages {
 
-        stage('Install Docker Compose v2') {
+    stage('Pre-flight Checks') {
+      parallel {
+        stage('Check Docker Compose v2') {
           steps {
             sh '''
-              # Check if docker compose v2 is already available
               if ! docker compose version > /dev/null 2>&1; then
-                echo "Installing Docker Compose plugin..."
-
-                # Create required folders
+                echo "Installing Docker Compose v2…"
                 mkdir -p ~/.docker/cli-plugins
-
-                # Download Docker Compose plugin binary
                 curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 \
                   -o ~/.docker/cli-plugins/docker-compose
-
-                # Make it executable
                 chmod +x ~/.docker/cli-plugins/docker-compose
-
-                # Verify install
-                docker compose version
               else
-                echo "Docker Compose already installed"
+                echo "Docker Compose v2 present"
               fi
             '''
           }
         }
 
-        stage('Checkout Code') {
-            steps {
-                echo 'I checkout source code from github...'
-                //  Jenkins automatically clones the repo containing this Jenkinsfile
-                //    Jenkins automatically pulls GitHub repository
-                //    Shows commit hash and branch information
-                //    Sets up the workspace for building
-
-                // use the lower-level checkout scm syntax for more control:
-                // script {
-                //     echo "Building commit: ${env.GIT_COMMIT}"
-                //     echo "Branch: ${env.GIT_BRANCH}"
-                //     checkout([
-                //         $class: 'GitSCM',
-                //         branches: [[name: '*/main']],
-                //         doGenerateSubmoduleConfigurations: false,
-                //         extensions: [],
-                //         userRemoteConfigs: [[
-                //             // url: 'git@github.com:dubratati987/acquisitions.git'
-                //             url: 'https://github.com/dubratati987/acquisitions.git'
-                //         ]]
-                //     ])
-                // }
-
-                // OR
-                // Shallow Clone for Faster Builds
-                // checkout([
-                //     $class: 'GitSCM',
-                //     branches: [[name: '*/main']],
-                //     extensions: [[$class: 'CloneOption', shallow: true, depth: 1]],
-                //     userRemoteConfigs: [[url: 'https://github.com/username/repository.git']]
-                // ])
-
-
-                // OR
-                // Checkout a public GitHub repo (no credentials needed)
-                // Scripted Pipeline (not Declarative)
-                git branch: 'main',
-                // credentialsId: 'my-github-token',
-                url: 'https://github.com/dubratati987/acquisitions.git'
-            }
-        }
-
-
-        stage('Prepare .env') {
+        stage('System Info') {
           steps {
-            // withCredentials([string(credentialsId: 'accquisition-env-file', variable: 'ENV_CONTENT')]) {
-            //     writeFile file: "$GENERATED_ENV_FILE", text: "${ENV_CONTENT}"
-            //     echo ".env.production file created"
-            // }
-
-           
-            withCredentials([file(credentialsId: 'accquisition-env-file', variable: 'ENV_FILE')]) {
-               sh """
-                  cp "$ENV_FILE" "$GENERATED_ENV_FILE"
-                  echo ".env.production file created"
-                  cat "$GENERATED_ENV_FILE"
-                """
-            }
+            sh '''
+              echo "Docker version:"
+              docker --version || true
+              echo "Node info"
+              node -v || true
+            '''
           }
         }
-
-        
-        stage('Build Docker Image') {
-            steps {
-                echo 'Build Docker Image'
-                script {
-                    sh "docker compose -f docker-compose.prod.yml build --no-cache"
-                }
-            }
-        }
-
-        // stage('Generate Prisma Client') {
-        //     steps {
-        //         echo '📦 Generating Prisma client inside container...'
-        //         script {
-        //             // Run Prisma generate inside the app container
-        //             sh """
-        //                 docker compose --env-file "$GENERATED_ENV_FILE" -f docker-compose.prod.yml run --rm app npx prisma generate
-        //               """
-        //         }
-        //     }
-        // }
-
-        stage('Start Application Services') {
-          steps {
-            echo '🚀 Starting accquisition application...'
-            script {
-              // Start the complete application stack
-              sh "docker compose -f docker-compose.prod.yml up -d"
-
-              // Wait for services to be ready
-              echo "Waiting for services to start..."
-              sleep(time: 30, unit: "SECONDS")
-
-              // Show running containers
-              sh '''
-                  docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
-              '''
-              // sh "npm run db:migrate"
-            }
-          }
-        }
-
-        stage('Health Check') {
-          steps {
-            echo '🩺 Running health checks...'
-            script {
-              // Test backend API
-              echo "Testing backend API..."
-              sh """
-                curl -f http://host.docker.internal:3000/health || {
-                echo '❌ Backend health check failed'
-                exit 1
-                }
-                echo '✅ Backend is healthy'
-              """
-            }
-          }
-        }
-
-
-        stage('Integration Tests') {
-          steps {
-            echo '🧪 Running integration tests...'
-            script {
-              // Create a test task
-              sh '''
-              echo "Creating test task..."
-              curl -X POST http://host.docker.internal:3000/api/auth/sign-up \
-              -H "Content-Type: application/json" \
-              -d '{"name": "Jenkins CI Test Task", "email": "bratati4@yahoo.co.in", "password": "123456"}' \
-              -f || exit 1
-              '''
-            }
-          }
-        }
-
-        stage('Performance Check') {
-          steps {
-            echo '⚡ Running basic performance checks...'
-            script {
-              // Simple response time check
-              sh '''
-              curl -w "⏱ Time: %{time_total}s\\n" -o /dev/null -s http://host.docker.internal:3000/api/users
-              '''
-
-            }
-          }
-        }
-
- 
-
+      }
     }
 
-    post {
-      always {
-        echo '🧹 Cleaning up resources...'
-        script {
-          // Always clean up, regardless of build result
+    stage('Matrix Quick Test') {
+      // Jenkins Matrix Builds (Declarative Pipeline)
+      //   Matrix builds allow you to run the same stage on multiple combinations such as:
+      //   Node 16 / Node 18
+      //   Linux / Windows
+      //   arm64 / amd64
+      //   Chrome / Firefox
+      matrix {
+        axes {
+          axis {
+            name 'NODE_VERSION'
+            values '18','20'
+          }
+        }
+        stages {
+          stage('Quick Node Test') {
+            steps {
+              sh '''
+                echo "Testing Node ${NODE_VERSION} via docker run..."
+                docker run --rm node:${NODE_VERSION} node -v
+              '''
+            }
+          }
+        }
+      }
+    }
+
+    stage('Checkout Code') {
+      steps {
+        git branch: 'main', url: 'https://github.com/dubratati987/acquisitions.git'
+      }
+    }
+
+    stage('Prepare .env') {
+      steps {
+        withCredentials([file(credentialsId: 'accquisition-env-file', variable: 'ENV_FILE')]) {
           sh '''
-          echo "Stopping application containers..."
-          docker compose down || true
-          echo "Removing test containers..."
-          docker rm -f $(docker ps -aq --filter "label=jenkins-test") || true
-          echo "Cleaning up unused images..."
-          docker image prune -f || true
+            cp "$ENV_FILE" "$GENERATED_ENV_FILE"
+            echo ".env.production created"
           '''
         }
       }
+    }
 
-      success {
-        echo '✅ Pipeline completed successfully!'
-        script {
-          // Additional success actions
-          sh 'echo "Build #${BUILD_NUMBER} succeeded at $(date)"'
+    // ----------------------------
+    // Parallel: lint + unit tests + prisma validate
+    // ----------------------------
+    stage('Code Quality & Tests') {
+      // Jenkins execute multiple branches at the same time using the parallel block.
+      parallel {
+        stage('Lint') {
+          steps {
+            sh '''
+              echo "Running lint..."
+              npm ci
+              npm run lint || ( echo "Lint failed" && exit 1 )
+            '''
+          }
+        }
+
+        stage('Unit Tests') {
+          steps {
+            sh '''
+              echo "Running unit tests..."
+              npm ci
+              npm test || ( echo "Unit tests failed" && exit 1 )
+            '''
+          }
+        }
+
+        stage('Prisma Validate') {
+          steps {
+            script {
+              // Run prisma validate inside ephemeral node container to avoid requiring prisma on Jenkins host
+              sh '''
+                echo "Validating Prisma schema inside a Node container..."
+                docker run --rm -v "$PWD":/app -w /app node:18-alpine sh -c '
+                  apk add --no-cache python3 make g++ > /dev/null 2>&1 || true
+                  npm ci --omit=dev
+                  npx prisma validate --schema=prisma/schema.prisma
+                '
+              '''
+            }
+          }
         }
       }
+    }
 
-      failure {
-        echo '❌ Pipeline failed!'
-        script {
-          // Capture logs for debugging
+    stage('Build Docker Image (local)') {
+      steps {
+        echo 'Building docker image (compose build)'
+        sh '''
+          docker compose -f docker-compose.prod.yml build --no-cache
+        '''
+      }
+    }
+
+    stage('Start Application Services') {
+      steps {
+        sh '''
+          docker compose -f docker-compose.prod.yml up -d
+          echo "Waiting 30s for services..."
+          sleep 30
+          docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+        '''
+      }
+    }
+
+    stage('Health Check') {
+      steps {
+        sh '''
+          echo "Running health check against host.docker.internal..."
+          curl -f http://host.docker.internal:3000/health || { echo "Health check failed"; exit 1; }
+          echo "Health OK"
+        '''
+      }
+    }
+
+    stage('Integration Tests') {
+      steps {
+        sh '''
+          echo "Creating random test user..."
+          RANDOM_EMAIL="jenkins_${BUILD_NUMBER}_$RANDOM@example.com"
+          echo "Generated email: $RANDOM_EMAIL"
+
+          curl -X POST "http://host.docker.internal:3000/api/auth/sign-up" \
+            -H "Content-Type: application/json" \
+            -d "{\\"name\\":\\"Jenkins CI Test\\",\\"email\\":\\"$RANDOM_EMAIL\\",\\"password\\":\\"123456\\"}" \
+            -f || { echo "Create user failed"; exit 1; }
+        '''
+      }
+    }
+
+    stage('Performance Check') {
+      steps {
+        sh '''
+          curl -w "⏱ Time: %{time_total}s\\n" -o /dev/null -s http://host.docker.internal:3000/api/users
+        '''
+      }
+    }
+
+    // ----------------------------
+    // Multi-arch build (amd64 + arm64) using docker buildx
+    // ----------------------------
+    stage('Multi-arch Build & Push') {
+      when {
+        expression { return env.PUSH_IMAGE == 'true' }
+      }
+      steps {
+        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
           sh '''
-          echo "Capturing container logs for debugging..."
-          docker compose logs || true
+            set -e
+
+            echo "Logging into Docker registry..."
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+            # Create a new builder if not exists
+            builder_name="jenkins-buildx"
+            if ! docker buildx inspect ${builder_name} > /dev/null 2>&1; then
+              docker buildx create --name ${builder_name} --use
+            else
+              docker buildx use ${builder_name}
+            fi
+
+            echo "Building multi-arch image for amd64,arm64 and pushing..."
+            docker buildx build --platform linux/amd64,linux/arm64 \
+              -t ${DOCKER_IMAGE_NAME}:${DOCKER_LATEST_TAG} \
+              --push .
+
+            # Optionally inspect the image manifest
+            docker buildx imagetools inspect ${DOCKER_IMAGE_NAME}:${DOCKER_LATEST_TAG} || true
+
+            # Clean up builder if desired (optional)
+            # docker buildx rm ${builder_name} || true
           '''
         }
       }
-
-      unstable {
-        echo '⚠️ Pipeline completed with warnings'
-      }
     }
+
+  } // stages
+
+  post {
+    always {
+      sh '''
+        echo "Cleaning up: docker compose down"
+        docker compose -f docker-compose.prod.yml down || true
+        docker image prune -f || true
+      '''
+    }
+    success {
+      echo "✅ Pipeline succeeded"
+    }
+    failure {
+      sh '''
+        echo "Collecting logs for debugging..."
+        docker compose -f docker-compose.prod.yml logs || true
+      '''
+    }
+  }
 }
