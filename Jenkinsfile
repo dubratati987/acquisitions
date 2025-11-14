@@ -92,7 +92,10 @@ pipeline {
           steps {
             sh '''
               echo "Running lint..."
-              docker run --rm -v "$WORKSPACE":/app -w /app node:18-alpine sh -c "
+              docker run --rm \
+                  -v "$WORKSPACE":/app \
+                  -w /app \
+                  node:18-alpine sh -c "
                 npm ci
                 npm run lint || (echo 'Lint failed' && exit 1)
               "
@@ -104,7 +107,10 @@ pipeline {
           steps {
             sh '''
               echo "Running unit tests..."
-              docker run --rm -v "$WORKSPACE":/app -w /app node:18-alpine sh -c "
+              docker run --rm \
+                  -v "$WORKSPACE":/app \
+                  -w /app \
+                  node:18-alpine sh -c  "
                 npm ci
                 npm test || (echo 'Unit tests failed' && exit 1)
               "
@@ -116,7 +122,10 @@ pipeline {
           steps {
             sh '''
               echo "Validating Prisma schema..."
-              docker run --rm -v "$WORKSPACE":/app -w /app node:18-alpine sh -c "
+              docker run --rm \
+                  -v "$WORKSPACE":/app \
+                  -w /app \
+                  node:18-alpine sh -c  "
                 apk add --no-cache python3 make g++ > /dev/null 2>&1 || true
                 npm ci --omit=dev
                 npx prisma validate --schema=prisma/schema.prisma
