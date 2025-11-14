@@ -2,14 +2,12 @@ pipeline {
   agent any
 
   environment {
-    DOCKER_IMAGE_NAME = 'dubratati987/docker-acquisitions'
-    DOCKER_LATEST_TAG = 'jenkins'
+    DOCKER_IMAGE_NAME  = 'dubratati987/docker-acquisitions'
+    DOCKER_LATEST_TAG  = 'jenkins'
     WORKSPACE_PATH     = "${env.WORKSPACE}"
     GENERATED_ENV_FILE = "${env.WORKSPACE}/.env.production"
 
-    // Set to 'true' to push multi-arch image to registry, otherwise 'false'
     PUSH_IMAGE = 'true'
-    // DockerHub credential id (username/password). Replace if different.
     DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
   }
 
@@ -17,6 +15,7 @@ pipeline {
 
     stage('Pre-flight Checks') {
       parallel {
+
         stage('Check Docker Compose v2') {
           steps {
             sh '''
@@ -38,21 +37,17 @@ pipeline {
             sh '''
               echo "Docker version:"
               docker --version || true
+
               echo "Node info"
               node -v || true
             '''
           }
         }
+
       }
     }
 
     stage('Matrix Quick Test') {
-      // Jenkins Matrix Builds (Declarative Pipeline)
-      //   Matrix builds allow you to run the same stage on multiple combinations such as:
-      //   Node 16 / Node 18
-      //   Linux / Windows
-      //   arm64 / amd64
-      //   Chrome / Firefox
       matrix {
         axes {
           axis {
@@ -90,12 +85,9 @@ pipeline {
       }
     }
 
-    // ----------------------------
-    // Parallel: lint + unit tests + prisma validate
-    // ----------------------------
     stage('Code Quality & Tests') {
-      // Jenkins execute multiple branches at the same time using the parallel block.
       parallel {
+
         stage('Lint') {
           steps {
             sh '''
@@ -132,6 +124,7 @@ pipeline {
             '''
           }
         }
+
       }
     }
 
@@ -188,22 +181,19 @@ pipeline {
       }
     }
 
-    // ----------------------------
-    // Multi-arch build (amd64 + arm64) using docker buildx
-    // ----------------------------
     stage('Multi-arch Build & Push') {
-      when {
-        expression { return env.PUSH_IMAGE == 'true' }
-      }
+      when { expression { return env.PUSH_IMAGE == 'true' } }
       steps {
-        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID,
+                                          usernameVariable: 'DOCKER_USER',
+                                          passwordVariable: 'DOCKER_PASS')]) {
+
           sh '''
             set -e
 
             echo "Logging into Docker registry..."
             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-            # Create a new builder if not exists
             builder_name="jenkins-buildx"
             if ! docker buildx inspect ${builder_name} > /dev/null 2>&1; then
               docker buildx create --name ${builder_name} --use
@@ -216,11 +206,7 @@ pipeline {
               -t ${DOCKER_IMAGE_NAME}:${DOCKER_LATEST_TAG} \
               --push .
 
-            # Optionally inspect the image manifest
             docker buildx imagetools inspect ${DOCKER_IMAGE_NAME}:${DOCKER_LATEST_TAG} || true
-
-            # Clean up builder if desired (optional)
-            # docker buildx rm ${builder_name} || true
           '''
         }
       }
