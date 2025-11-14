@@ -100,8 +100,8 @@ pipeline {
           steps {
             sh '''
               echo "Running lint..."
-              npm ci
-              npm run lint || ( echo "Lint failed" && exit 1 )
+              docker compose -f docker-compose.prod.yml run --rm acquisitions-app-prod npm ci
+              docker compose -f docker-compose.prod.yml run --rm acquisitions-app-prod npm run lint || (echo "Lint failed" && exit 1)
             '''
           }
         }
@@ -110,8 +110,8 @@ pipeline {
           steps {
             sh '''
               echo "Running unit tests..."
-              npm ci
-              npm test || ( echo "Unit tests failed" && exit 1 )
+              docker compose -f docker-compose.prod.yml run --rm acquisitions-app-prod npm ci
+              docker compose -f docker-compose.prod.yml run --rm acquisitions-app-prod npm test || ( echo "Unit tests failed" && exit 1 )
             '''
           }
         }
