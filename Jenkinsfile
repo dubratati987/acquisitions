@@ -96,12 +96,18 @@ pipeline {
     stage('Code Quality & Tests') {
       // Jenkins execute multiple branches at the same time using the parallel block.
       parallel {
+
         stage('Lint') {
           steps {
             sh '''
               echo "Running lint..."
-              docker compose -f docker-compose.prod.yml run --rm app npm ci
-              docker compose -f docker-compose.prod.yml run --rm app npm run lint || (echo "Lint failed" && exit 1)
+              docker run --rm \
+                -v "$PWD":/app \
+                -w /app \
+                node:18-alpine sh -c "
+                  npm ci
+                  npm run lint || (echo 'Lint failed' && exit 1)
+                "
             '''
           }
         }
@@ -110,28 +116,35 @@ pipeline {
           steps {
             sh '''
               echo "Running unit tests..."
-              docker compose -f docker-compose.prod.yml run --rm app npm ci
-              docker compose -f docker-compose.prod.yml run --rm app npm test || ( echo "Unit tests failed" && exit 1 )
+              docker run --rm \
+                -v "$PWD":/app \
+                -w /app \
+                node:18-alpine sh -c "
+                  npm ci
+                  npm test || (echo 'Unit tests failed' && exit 1)
+                "
             '''
           }
         }
 
         stage('Prisma Validate') {
           steps {
-            script {
-              // Run prisma validate inside ephemeral node container to avoid requiring prisma on Jenkins host
-              sh '''
-                echo "Validating Prisma schema inside a Node container..."
-                docker run --rm -v "$PWD":/app -w /app node:18-alpine sh -c '
+            sh '''
+              echo "Validating Prisma schema inside a Node container..."
+              docker run --rm \
+                -v "$PWD":/app \
+                -w /app \
+                node:18-alpine sh -c "
                   apk add --no-cache python3 make g++ > /dev/null 2>&1 || true
-                  npm ci --omit=dev
+                  npm ci
                   npx prisma validate --schema=prisma/schema.prisma
-                '
-              '''
-            }
+                "
+            '''
           }
         }
+
       }
+
     }
 
     stage('Build Docker Image (local)') {
