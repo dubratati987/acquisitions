@@ -130,52 +130,53 @@ pipeline {
      * --------------------------------------------------------- */
     stage('Code Quality & Tests') {
       parallel {
-
-        stage('Lint') {
-          steps {
-            sh """
-            docker run --rm \
-              -v "$WORKSPACE/acquisition-app:/app" \
-              -w /app \
-              node:18-alpine sh -c '
-                npm ci
-                npm run lint
-              '
-            """
-
+          stage('Lint') {
+            steps {
+              sh '''
+                echo "Running lint..."
+                docker run --rm \
+                  -v "$WORKSPACE":/app \
+                  -w /app \
+                  node:18-alpine sh -c "
+                    npm ci
+                    npm run lint || (echo 'Lint failed' && exit 1)
+                  "
+              '''
+            }
           }
-        }
 
-        stage('Unit Tests') {
-          steps {
-            sh """
-              docker run --rm \
-                -v "$WORKSPACE/acquisition-app:/app" \
-                -w /app \
-                node:18-alpine sh -c '
-                  npm ci
-                  npm test
-                '
-            """
+          stage('Unit Tests') {
+            steps {
+              sh '''
+                echo "Running unit tests..."
+                docker run --rm \
+                  -v "$WORKSPACE":/app \
+                  -w /app \
+                  node:18-alpine sh -c "
+                    npm ci
+                    npm test || (echo 'Unit tests failed' && exit 1)
+                  "
+              '''
+            }
           }
-        }
 
-        stage('Prisma Validate') {
-          steps {
-            sh """
-              docker run --rm \
-                -v "$WORKSPACE/acquisition-app:/app" \
-                -w /app \
-                node:18-alpine sh -c '
-                  apk add --no-cache python3 make g++
-                  npm ci --omit=dev
-                  npx prisma validate --schema=prisma/schema.prisma
-                '
-            """
+          stage('Prisma Validate') {
+            steps {
+              sh '''
+                echo "Validating Prisma schema..."
+                docker run --rm \
+                  -v "$WORKSPACE":/app \
+                  -w /app \
+                  node:18-alpine sh -c "
+                    apk add --no-cache python3 make g++ >/dev/null 2>&1
+                    npm ci --omit=dev
+                    npx prisma validate --schema=prisma/schema.prisma
+                  "
+              '''
+            }
           }
-        }
-
       }
+
     }
 
 
