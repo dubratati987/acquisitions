@@ -1,12 +1,6 @@
 pipeline {
 
-  agent {
-    docker {
-      // Docker CLI image already includes: docker, buildx, compose v2
-      image 'docker:24.0.7-cli'
-      args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
-    }
-  }
+  agent any
 
   environment {
     DOCKER_IMAGE_NAME  = 'dubratati987/docker-acquisitions'
@@ -130,51 +124,53 @@ pipeline {
      * --------------------------------------------------------- */
     stage('Code Quality & Tests') {
       parallel {
-          stage('Lint') {
-            steps {
-              sh '''
-                echo "Running lint..."
-                docker run --rm \
-                  -v "$WORKSPACE":/app \
-                  -w /app \
-                  node:18-alpine sh -c "
-                    npm ci
-                    npm run lint || (echo 'Lint failed' && exit 1)
-                  "
-              '''
-            }
-          }
 
-          stage('Unit Tests') {
-            steps {
-              sh '''
-                echo "Running unit tests..."
-                docker run --rm \
-                  -v "$WORKSPACE":/app \
-                  -w /app \
-                  node:18-alpine sh -c "
-                    npm ci
-                    npm test || (echo 'Unit tests failed' && exit 1)
-                  "
-              '''
+        stage('Lint') {
+          agent {
+            docker {
+              image 'node:18-alpine'
+              args "-v ${WORKSPACE}:/app -w /app"
             }
           }
+          steps {
+            sh """
+              npm ci
+              npm run lint
+            """
+          }
+        }
 
-          stage('Prisma Validate') {
-            steps {
-              sh '''
-                echo "Validating Prisma schema..."
-                docker run --rm \
-                  -v "$WORKSPACE":/app \
-                  -w /app \
-                  node:18-alpine sh -c "
-                    apk add --no-cache python3 make g++ >/dev/null 2>&1
-                    npm ci --omit=dev
-                    npx prisma validate --schema=prisma/schema.prisma
-                  "
-              '''
+        stage('Unit Tests') {
+          agent {
+            docker {
+              image 'node:18-alpine'
+              args "-v ${WORKSPACE}:/app -w /app"
             }
           }
+          steps {
+            sh """
+              npm ci
+              npm test
+            """
+          }
+        }
+
+        stage('Prisma Validate') {
+          agent {
+            docker {
+              image 'node:18-alpine'
+              args "-v ${WORKSPACE}:/app -w /app"
+            }
+          }
+          steps {
+            sh """
+              apk add --no-cache python3 make g++
+              npm ci --omit=dev
+              npx prisma validate --schema=prisma/schema.prisma
+            """
+          }
+        }
+
       }
 
     }
