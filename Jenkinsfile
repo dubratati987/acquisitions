@@ -124,7 +124,7 @@ pipeline {
           steps {
             sh '''
               docker run --rm \
-                -v "$PWD":/app \
+                -v "$WORKSPACE":/app \
                 -w /app \
                 node:18-alpine sh -c "
                   npm ci
@@ -138,7 +138,7 @@ pipeline {
           steps {
             sh '''
               docker run --rm \
-                -v "$PWD":/app \
+                -v "$WORKSPACE":/app \
                 -w /app \
                 node:18-alpine sh -c "
                   npm ci
@@ -152,7 +152,7 @@ pipeline {
           steps {
             sh '''
               docker run --rm \
-                -v "$PWD":/app \
+                -v "$WORKSPACE":/app \
                 -w /app \
                 node:18-alpine sh -c "
                   apk add --no-cache python3 make g++
@@ -165,6 +165,7 @@ pipeline {
 
       }
     }
+
 
 
     /* ---------------------------------------------------------
