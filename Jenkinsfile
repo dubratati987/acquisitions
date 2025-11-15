@@ -1,39 +1,38 @@
 pipeline {
 
-  agent none
+  agent none   // We define agents only inside stages
 
   environment {
     DOCKER_IMAGE_NAME  = 'dubratati987/docker-acquisitions'
     DOCKER_LATEST_TAG  = 'jenkins'
     WORKSPACE_PATH     = "${env.WORKSPACE}"
     GENERATED_ENV_FILE = "${env.WORKSPACE}/.env.production"
-
-    PUSH_IMAGE = 'true'
+    PUSH_IMAGE         = 'true'
     DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
   }
 
   stages {
 
     /* ---------------------------------------------------------
-     * Pre-flight (System Info + compose availability)
+     * Pre-flight (System Info + Docker checks)
      * --------------------------------------------------------- */
     stage('Pre-flight Checks') {
-      agent {
-        docker {
-          image 'node:18-alpine'
-          args "-v ${WORKSPACE}:/app -w /app"
-        }
-      }
       parallel {
 
         stage('System Info') {
+          agent {
+            docker {
+              image 'node:18-alpine'
+              args "-v ${WORKSPACE}:/app -w /app -v /var/run/docker.sock:/var/run/docker.sock"
+            }
+          }
           steps {
             sh '''
               echo "Docker version:"
               docker --version
 
               echo "Docker Compose version:"
-              docker compose version
+              docker compose version || docker-compose version
 
               echo "Node version:"
               node -v
@@ -42,6 +41,12 @@ pipeline {
         }
 
         stage('Check Buildx') {
+          agent {
+            docker {
+              image 'node:18-alpine'
+              args "-v /var/run/docker.sock:/var/run/docker.sock"
+            }
+          }
           steps {
             sh '''
               echo "Checking buildx..."
@@ -54,7 +59,7 @@ pipeline {
     }
 
     /* ---------------------------------------------------------
-     * Test using Matrix
+     * Matrix Quick Test
      * --------------------------------------------------------- */
     stage('Matrix Quick Test') {
       matrix {
@@ -81,6 +86,7 @@ pipeline {
      * Checkout source code
      * --------------------------------------------------------- */
     stage('Checkout Code') {
+      agent any
       steps {
         git branch: 'main', url: 'https://github.com/dubratati987/acquisitions.git'
       }
@@ -90,6 +96,7 @@ pipeline {
      * Prepare .env.production file
      * --------------------------------------------------------- */
     stage('Prepare .env') {
+      agent any
       steps {
         withCredentials([file(credentialsId: 'accquisition-env-file', variable: 'ENV_FILE')]) {
           sh '''
@@ -100,7 +107,11 @@ pipeline {
       }
     }
 
+    /* ---------------------------------------------------------
+     * Debug workspace
+     * --------------------------------------------------------- */
     stage('Debug Workspace') {
+      agent any
       steps {
         sh '''
           echo "---- LIST workspace -----"
@@ -111,11 +122,12 @@ pipeline {
     }
 
     /* ---------------------------------------------------------
-     * Code Quality in Parallel
+     * Code Quality (Lint, Unit Tests, Prisma Validate)
      * --------------------------------------------------------- */
     stage('Code Quality & Tests') {
       parallel {
 
+        /* Lint ----------------------------------------------- */
         stage('Lint') {
           agent {
             docker {
@@ -124,13 +136,14 @@ pipeline {
             }
           }
           steps {
-            sh """
+            sh '''
               npm ci
               npm run lint
-            """
+            '''
           }
         }
 
+        /* Unit Tests ----------------------------------------- */
         stage('Unit Tests') {
           agent {
             docker {
@@ -139,13 +152,14 @@ pipeline {
             }
           }
           steps {
-            sh """
+            sh '''
               npm ci
               npm test
-            """
+            '''
           }
         }
 
+        /* Prisma Validate ------------------------------------ */
         stage('Prisma Validate') {
           agent {
             docker {
@@ -154,22 +168,22 @@ pipeline {
             }
           }
           steps {
-            sh """
-              apk add --no-cache python3 make g++
+            sh '''
+              apk add --no-cache python3 make g++ >/dev/null 2>&1
               npm ci --omit=dev
               npx prisma validate --schema=prisma/schema.prisma
-            """
+            '''
           }
         }
 
       }
-
     }
 
     /* ---------------------------------------------------------
-     * Build your Docker image locally (host build)
+     * Build Docker image locally
      * --------------------------------------------------------- */
     stage('Build Docker Image (local)') {
+      agent any
       steps {
         sh '''
           echo "Building Docker image using compose..."
@@ -179,23 +193,25 @@ pipeline {
     }
 
     /* ---------------------------------------------------------
-     * Start services & verify health
+     * Start services
      * --------------------------------------------------------- */
     stage('Start Application Services') {
+      agent any
       steps {
         sh '''
           docker compose -f docker-compose.prod.yml up -d
-          echo "Waiting 30 seconds to allow services to start..."
-          sleep 30
+          echo "Waiting 25 seconds..."
+          sleep 25
           docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
         '''
       }
     }
 
     /* ---------------------------------------------------------
-     * Health check
+     * Health Check
      * --------------------------------------------------------- */
     stage('Health Check') {
+      agent any
       steps {
         sh '''
           echo "Running health check..."
@@ -209,24 +225,23 @@ pipeline {
      * Integration Tests
      * --------------------------------------------------------- */
     stage('Integration Tests') {
+      agent any
       steps {
         sh '''
           RANDOM_EMAIL="jenkins_${BUILD_NUMBER}_$RANDOM@example.com"
 
-          echo "Creating random test user: $RANDOM_EMAIL"
-
           curl -X POST "http://host.docker.internal:3000/api/auth/sign-up" \
             -H "Content-Type: application/json" \
-            -d "{\\"name\\":\\"Jenkins CI Test\\",\\"email\\":\\"$RANDOM_EMAIL\\",\\"password\\":\\"123456\\"}" \
-            -f
+            -d "{\\"name\\":\\"Jenkins CI Test\\",\\"email\\":\\"$RANDOM_EMAIL\\",\\"password\\":\\"123456\\"}" -f
         '''
       }
     }
 
     /* ---------------------------------------------------------
-     * Basic performance check
+     * Performance Check
      * --------------------------------------------------------- */
     stage('Performance Check') {
+      agent any
       steps {
         sh '''
           curl -w "⏱ Time: %{time_total}s\\n" -o /dev/null -s http://host.docker.internal:3000/api/users
@@ -235,18 +250,17 @@ pipeline {
     }
 
     /* ---------------------------------------------------------
-     * Multi-arch Build + Push via Buildx
+     * Multi-arch Build + Push
      * --------------------------------------------------------- */
     stage('Multi-arch Build & Push') {
-      when { expression { return env.PUSH_IMAGE == 'true' } }
+      when { expression { env.PUSH_IMAGE == 'true' } }
+      agent any
       steps {
         withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID,
                                           usernameVariable: 'DOCKER_USER',
                                           passwordVariable: 'DOCKER_PASS')]) {
 
           sh '''
-            set -e
-
             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
             builder_name="jenkins-buildx"
@@ -257,13 +271,10 @@ pipeline {
               docker buildx use ${builder_name}
             fi
 
-            echo "Building multi-arch image (amd64 + arm64)..."
             docker buildx build \
               --platform linux/amd64,linux/arm64 \
               -t ${DOCKER_IMAGE_NAME}:${DOCKER_LATEST_TAG} \
               --push .
-
-            docker buildx imagetools inspect ${DOCKER_IMAGE_NAME}:${DOCKER_LATEST_TAG} || true
           '''
         }
       }
