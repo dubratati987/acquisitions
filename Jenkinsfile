@@ -1,10 +1,10 @@
 pipeline {
-  // agent any
 
   agent {
     docker {
-      image 'node:18-alpine'
-      args '-u root:root -v /var/jenkins_home:/var/jenkins_home'
+      // Docker CLI image already includes: docker, buildx, compose v2
+      image 'docker:24.0.7-cli'
+      args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
 
@@ -20,33 +20,46 @@ pipeline {
 
   stages {
 
+    /* ---------------------------------------------------------
+     * Install Node (inside docker:cli container)
+     * --------------------------------------------------------- */
+    stage('Install Node') {
+      steps {
+        sh '''
+          echo "Installing Node.js & npm inside the agent container..."
+          apk add --no-cache nodejs npm python3 make g++
+          node -v
+          npm -v
+        '''
+      }
+    }
+
+    /* ---------------------------------------------------------
+     * Pre-flight (System Info + compose availability)
+     * --------------------------------------------------------- */
     stage('Pre-flight Checks') {
       parallel {
-
-        stage('Check Docker Compose v2') {
-          steps {
-            sh '''
-              if ! docker compose version > /dev/null 2>&1; then
-                echo "Installing Docker Compose v2…"
-                mkdir -p ~/.docker/cli-plugins
-                curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 \
-                  -o ~/.docker/cli-plugins/docker-compose
-                chmod +x ~/.docker/cli-plugins/docker-compose
-              else
-                echo "Docker Compose v2 present"
-              fi
-            '''
-          }
-        }
 
         stage('System Info') {
           steps {
             sh '''
               echo "Docker version:"
-              docker --version || true
+              docker --version
 
-              echo "Node info"
-              node -v || true
+              echo "Docker Compose version:"
+              docker compose version
+
+              echo "Node version:"
+              node -v
+            '''
+          }
+        }
+
+        stage('Check Buildx') {
+          steps {
+            sh '''
+              echo "Checking buildx..."
+              docker buildx version || true
             '''
           }
         }
@@ -54,19 +67,22 @@ pipeline {
       }
     }
 
+    /* ---------------------------------------------------------
+     * Test using Matrix
+     * --------------------------------------------------------- */
     stage('Matrix Quick Test') {
       matrix {
         axes {
           axis {
             name 'NODE_VERSION'
-            values '18','20'
+            values '18', '20'
           }
         }
         stages {
           stage('Quick Node Test') {
             steps {
               sh '''
-                echo "Testing Node ${NODE_VERSION} via docker run..."
+                echo "Testing Node ${NODE_VERSION} using docker run..."
                 docker run --rm node:${NODE_VERSION} node -v
               '''
             }
@@ -75,12 +91,18 @@ pipeline {
       }
     }
 
+    /* ---------------------------------------------------------
+     * Checkout source code
+     * --------------------------------------------------------- */
     stage('Checkout Code') {
       steps {
         git branch: 'main', url: 'https://github.com/dubratati987/acquisitions.git'
       }
     }
 
+    /* ---------------------------------------------------------
+     * Prepare .env.production file
+     * --------------------------------------------------------- */
     stage('Prepare .env') {
       steps {
         withCredentials([file(credentialsId: 'accquisition-env-file', variable: 'ENV_FILE')]) {
@@ -92,18 +114,17 @@ pipeline {
       }
     }
 
+    /* ---------------------------------------------------------
+     * Code Quality in Parallel
+     * --------------------------------------------------------- */
     stage('Code Quality & Tests') {
       parallel {
+
         stage('Lint') {
           steps {
             sh '''
-              echo "Running lint..."
-              docker run --rm \
-                -v "${WORKSPACE}":/app \
-                -w /app node:18-alpine sh -c "
-                  npm ci &&
-                  npm run lint || (echo 'Lint failed' && exit 1)
-                "
+              npm ci
+              npm run lint
             '''
           }
         }
@@ -111,13 +132,8 @@ pipeline {
         stage('Unit Tests') {
           steps {
             sh '''
-              echo "Running unit tests..."
-              docker run --rm \
-                -v "${WORKSPACE}":/app \
-                -w /app node:18-alpine sh -c "
-                  npm ci &&
-                  npm test || (echo 'Unit tests failed' && exit 1)
-                "
+              npm ci
+              npm test
             '''
           }
         }
@@ -125,66 +141,75 @@ pipeline {
         stage('Prisma Validate') {
           steps {
             sh '''
-              echo "Validating Prisma schema..."
-              docker run --rm \
-                -v "${WORKSPACE}":/app \
-                -w /app node:18-alpine sh -c "
-                  apk add --no-cache python3 make g++ > /dev/null 2>&1 || true
-                  npm ci --omit=dev
-                  npx prisma validate --schema=prisma/schema.prisma
-                "
+              npm ci --omit=dev
+              npx prisma validate --schema=prisma/schema.prisma
             '''
           }
         }
-      }
 
+      }
     }
 
+    /* ---------------------------------------------------------
+     * Build your Docker image locally (host build)
+     * --------------------------------------------------------- */
     stage('Build Docker Image (local)') {
       steps {
-        echo 'Building docker image (compose build)'
         sh '''
+          echo "Building Docker image using compose..."
           docker compose -f docker-compose.prod.yml build --no-cache
         '''
       }
     }
 
+    /* ---------------------------------------------------------
+     * Start services & verify health
+     * --------------------------------------------------------- */
     stage('Start Application Services') {
       steps {
         sh '''
           docker compose -f docker-compose.prod.yml up -d
-          echo "Waiting 30s for services..."
+          echo "Waiting 30 seconds to allow services to start..."
           sleep 30
           docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
         '''
       }
     }
 
+    /* ---------------------------------------------------------
+     * Health check
+     * --------------------------------------------------------- */
     stage('Health Check') {
       steps {
         sh '''
-          echo "Running health check against host.docker.internal..."
-          curl -f http://host.docker.internal:3000/health || { echo "Health check failed"; exit 1; }
+          echo "Running health check..."
+          curl -f http://host.docker.internal:3000/health
           echo "Health OK"
         '''
       }
     }
 
+    /* ---------------------------------------------------------
+     * Integration Tests
+     * --------------------------------------------------------- */
     stage('Integration Tests') {
       steps {
         sh '''
-          echo "Creating random test user..."
           RANDOM_EMAIL="jenkins_${BUILD_NUMBER}_$RANDOM@example.com"
-          echo "Generated email: $RANDOM_EMAIL"
+
+          echo "Creating random test user: $RANDOM_EMAIL"
 
           curl -X POST "http://host.docker.internal:3000/api/auth/sign-up" \
             -H "Content-Type: application/json" \
             -d "{\\"name\\":\\"Jenkins CI Test\\",\\"email\\":\\"$RANDOM_EMAIL\\",\\"password\\":\\"123456\\"}" \
-            -f || { echo "Create user failed"; exit 1; }
+            -f
         '''
       }
     }
 
+    /* ---------------------------------------------------------
+     * Basic performance check
+     * --------------------------------------------------------- */
     stage('Performance Check') {
       steps {
         sh '''
@@ -193,6 +218,9 @@ pipeline {
       }
     }
 
+    /* ---------------------------------------------------------
+     * Multi-arch Build + Push via Buildx
+     * --------------------------------------------------------- */
     stage('Multi-arch Build & Push') {
       when { expression { return env.PUSH_IMAGE == 'true' } }
       steps {
@@ -203,18 +231,19 @@ pipeline {
           sh '''
             set -e
 
-            echo "Logging into Docker registry..."
             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
             builder_name="jenkins-buildx"
-            if ! docker buildx inspect ${builder_name} > /dev/null 2>&1; then
+
+            if ! docker buildx inspect ${builder_name} >/dev/null 2>&1; then
               docker buildx create --name ${builder_name} --use
             else
               docker buildx use ${builder_name}
             fi
 
-            echo "Building multi-arch image for amd64,arm64 and pushing..."
-            docker buildx build --platform linux/amd64,linux/arm64 \
+            echo "Building multi-arch image (amd64 + arm64)..."
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
               -t ${DOCKER_IMAGE_NAME}:${DOCKER_LATEST_TAG} \
               --push .
 
@@ -226,10 +255,13 @@ pipeline {
 
   } // stages
 
+  /* ---------------------------------------------------------
+   * Cleanup
+   * --------------------------------------------------------- */
   post {
     always {
       sh '''
-        echo "Cleaning up: docker compose down"
+        echo "Stopping services..."
         docker compose -f docker-compose.prod.yml down || true
         docker image prune -f || true
       '''
@@ -239,7 +271,7 @@ pipeline {
     }
     failure {
       sh '''
-        echo "Collecting logs for debugging..."
+        echo "❌ Pipeline failed — showing logs"
         docker compose -f docker-compose.prod.yml logs || true
       '''
     }
