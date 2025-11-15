@@ -122,44 +122,45 @@ pipeline {
 
         stage('Lint') {
           steps {
-            sh '''
-              docker run --rm \
-                -v "$WORKSPACE":/app \
-                -w /app \
-                node:18-alpine sh -c "
-                  npm ci
-                  npm run lint
-                "
-            '''
+            sh """
+            docker run --rm \
+              -v "$WORKSPACE/acquisition-app:/app" \
+              -w /app \
+              node:18-alpine sh -c '
+                npm ci
+                npm run lint
+              '
+            """
+
           }
         }
 
         stage('Unit Tests') {
           steps {
-            sh '''
+            sh """
               docker run --rm \
-                -v "$WORKSPACE":/app \
+                -v "$WORKSPACE/acquisition-app:/app" \
                 -w /app \
-                node:18-alpine sh -c "
+                node:18-alpine sh -c '
                   npm ci
                   npm test
-                "
-            '''
+                '
+            """
           }
         }
 
         stage('Prisma Validate') {
           steps {
-            sh '''
+            sh """
               docker run --rm \
-                -v "$WORKSPACE":/app \
+                -v "$WORKSPACE/acquisition-app:/app" \
                 -w /app \
-                node:18-alpine sh -c "
+                node:18-alpine sh -c '
                   apk add --no-cache python3 make g++
                   npm ci --omit=dev
                   npx prisma validate --schema=prisma/schema.prisma
-                "
-            '''
+                '
+            """
           }
         }
 
