@@ -1,6 +1,6 @@
 pipeline {
 
-  agent any
+  agent none
 
   environment {
     DOCKER_IMAGE_NAME  = 'dubratati987/docker-acquisitions'
@@ -15,23 +15,15 @@ pipeline {
   stages {
 
     /* ---------------------------------------------------------
-     * Install Node (inside docker:cli container)
-     * --------------------------------------------------------- */
-    stage('Install Node') {
-      steps {
-        sh '''
-          echo "Installing Node.js & npm inside the agent container..."
-          apk add --no-cache nodejs npm python3 make g++
-          node -v
-          npm -v
-        '''
-      }
-    }
-
-    /* ---------------------------------------------------------
      * Pre-flight (System Info + compose availability)
      * --------------------------------------------------------- */
     stage('Pre-flight Checks') {
+      agent {
+        docker {
+          image 'node:18-alpine'
+          args "-v ${WORKSPACE}:/app -w /app"
+        }
+      }
       parallel {
 
         stage('System Info') {
@@ -118,7 +110,6 @@ pipeline {
       }
     }
 
-
     /* ---------------------------------------------------------
      * Code Quality in Parallel
      * --------------------------------------------------------- */
@@ -174,8 +165,6 @@ pipeline {
       }
 
     }
-
-
 
     /* ---------------------------------------------------------
      * Build your Docker image locally (host build)
