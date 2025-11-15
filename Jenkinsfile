@@ -1,6 +1,11 @@
 pipeline {
 
-  agent none   // We define agents only inside stages
+  agent {
+    docker {
+      image 'my-node-docker-agent:18'
+      args '-v /var/run/docker.sock:/var/run/docker.sock'
+    }
+  }
 
   environment {
     DOCKER_IMAGE_NAME  = 'dubratati987/docker-acquisitions'
@@ -10,6 +15,7 @@ pipeline {
     PUSH_IMAGE         = 'true'
     DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
   }
+
 
   stages {
 
