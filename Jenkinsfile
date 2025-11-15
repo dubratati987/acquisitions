@@ -123,8 +123,13 @@ pipeline {
         stage('Lint') {
           steps {
             sh '''
-              npm ci
-              npm run lint
+              docker run --rm \
+                -v "$PWD":/app \
+                -w /app \
+                node:18-alpine sh -c "
+                  npm ci
+                  npm run lint
+                "
             '''
           }
         }
@@ -132,8 +137,13 @@ pipeline {
         stage('Unit Tests') {
           steps {
             sh '''
-              npm ci
-              npm test
+              docker run --rm \
+                -v "$PWD":/app \
+                -w /app \
+                node:18-alpine sh -c "
+                  npm ci
+                  npm test
+                "
             '''
           }
         }
@@ -141,14 +151,21 @@ pipeline {
         stage('Prisma Validate') {
           steps {
             sh '''
-              npm ci --omit=dev
-              npx prisma validate --schema=prisma/schema.prisma
+              docker run --rm \
+                -v "$PWD":/app \
+                -w /app \
+                node:18-alpine sh -c "
+                  apk add --no-cache python3 make g++
+                  npm ci --omit=dev
+                  npx prisma validate --schema=prisma/schema.prisma
+                "
             '''
           }
         }
 
       }
     }
+
 
     /* ---------------------------------------------------------
      * Build your Docker image locally (host build)
