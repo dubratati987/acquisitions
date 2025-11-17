@@ -115,7 +115,7 @@ pipeline {
               ls -la "$WORKSPACE"
 
               docker run --rm -u 0:0 \
-                -v "$WORKSPACE":/app -w /app \
+                -v "$WORKSPACE/acquisition-app":/app -w /app \
                 node:18-alpine sh -c '
                   set -e
                   if [ ! -f package-lock.json ]; then
