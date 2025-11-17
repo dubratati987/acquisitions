@@ -224,7 +224,7 @@ pipeline {
     stage('Multi-arch Build & Push') {
       when { expression { env.PUSH_IMAGE == 'true' } }
       steps {
-        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID,
+        withCredentials([usernamePassword(credentialsId: "${env.DOCKER_CREDENTIALS_ID}",
                                           usernameVariable: 'DOCKER_USER',
                                           passwordVariable: 'DOCKER_PASS')]) {
           sh """
