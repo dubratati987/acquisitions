@@ -181,6 +181,10 @@ pipeline {
       steps {
         echo '🩺 Running health checks...'
         script {
+          sh """
+            echo 'Installing curl...'
+            apk update && apk add --no-cache curl
+          """
           // Test backend API
           echo "Testing backend API..."
           sh """
