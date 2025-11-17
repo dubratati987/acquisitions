@@ -18,7 +18,7 @@ pipeline {
   options {
     // keep build logs for troubleshooting
     timestamps()
-    ansiColor('xterm')
+    // ansiColor('xterm')
   }
 
   stages {
