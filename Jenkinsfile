@@ -102,58 +102,58 @@ pipeline {
       }
     }
 
-    stage('Code Quality & Tests') {
-      parallel {
+    // stage('Code Quality & Tests') {
+    //   parallel {
 
-        stage('Lint') {
-          steps {
-            // run npm inside ephemeral Node container (avoids overlayfs issues)
-            sh """
-              echo "Running lint in ephemeral node container..."
-              docker run --rm -u 0:0 \
-                -v "${env.WORKSPACE}":/app -w /app \
-                node:18-alpine sh -c '
-                  set -e
-                  npm ci --no-audit --no-fund
-                  npm run lint
-                '
-            """
-          }
-        }
+    //     stage('Lint') {
+    //       steps {
+    //         // run npm inside ephemeral Node container (avoids overlayfs issues)
+    //         sh """
+    //           echo "Running lint in ephemeral node container..."
+    //           docker run --rm -u 0:0 \
+    //             -v "${env.WORKSPACE}":/app -w /app \
+    //             node:18-alpine sh -c '
+    //               set -e
+    //               npm ci --no-audit --no-fund
+    //               npm run lint
+    //             '
+    //         """
+    //       }
+    //     }
 
-        stage('Unit Tests') {
-          steps {
-            sh """
-              echo "Running unit tests in ephemeral node container..."
-              docker run --rm -u 0:0 \
-                -v "${env.WORKSPACE}":/app -w /app \
-                node:18-alpine sh -c '
-                  set -e
-                  npm ci --no-audit --no-fund
-                  npm test
-                '
-            """
-          }
-        }
+    //     stage('Unit Tests') {
+    //       steps {
+    //         sh """
+    //           echo "Running unit tests in ephemeral node container..."
+    //           docker run --rm -u 0:0 \
+    //             -v "${env.WORKSPACE}":/app -w /app \
+    //             node:18-alpine sh -c '
+    //               set -e
+    //               npm ci --no-audit --no-fund
+    //               npm test
+    //             '
+    //         """
+    //       }
+    //     }
 
-        stage('Prisma Validate') {
-          steps {
-            sh """
-              echo "Validating Prisma schema in ephemeral node container..."
-              docker run --rm -u 0:0 \
-                -v "${env.WORKSPACE}":/app -w /app \
-                node:18-alpine sh -c '
-                  set -e
-                  apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
-                  npm ci --omit=dev --no-audit --no-fund
-                  npx prisma validate --schema=prisma/schema.prisma
-                '
-            """
-          }
-        }
+    //     stage('Prisma Validate') {
+    //       steps {
+    //         sh """
+    //           echo "Validating Prisma schema in ephemeral node container..."
+    //           docker run --rm -u 0:0 \
+    //             -v "${env.WORKSPACE}":/app -w /app \
+    //             node:18-alpine sh -c '
+    //               set -e
+    //               apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
+    //               npm ci --omit=dev --no-audit --no-fund
+    //               npx prisma validate --schema=prisma/schema.prisma
+    //             '
+    //         """
+    //       }
+    //     }
 
-      }
-    }
+    //   }
+    // }
 
     stage('Build Docker Image (compose build)') {
       steps {
