@@ -201,7 +201,7 @@ pipeline {
     stage('Integration Tests') {
       steps {
         sh """
-          RANDOM_EMAIL="jenkins_${BUILD_NUMBER}_$RANDOM@example.com"
+          RANDOM_EMAIL="jenkins_${env.BUILD_NUMBER}_${new Random()}@example.com"
           echo "Creating random test user: ${RANDOM_EMAIL}"
           curl -sSf -X POST "http://host.docker.internal:3000/api/auth/sign-up" \
             -H "Content-Type: application/json" \
