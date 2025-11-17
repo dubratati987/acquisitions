@@ -15,11 +15,11 @@ pipeline {
     DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
   }
 
-  options {
-    // keep build logs for troubleshooting
-    timestamps()
-    // ansiColor('xterm')
-  }
+  // options {
+  //   // keep build logs for troubleshooting
+  //   // timestamps()
+  //   // ansiColor('xterm')
+  // }
 
   stages {
 
