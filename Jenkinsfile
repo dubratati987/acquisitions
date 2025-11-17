@@ -107,29 +107,42 @@ pipeline {
 
         stage('Lint') {
           steps {
-            sh """
-              echo 'Cleaning old node_modules...'
-              rm -rf node_modules || true
+            script {
+              // Detect correct directory
+              if (fileExists("${WORKSPACE}/package.json")) {
+                env.CODE_DIR = WORKSPACE
+              } else if (fileExists("${WORKSPACE}/acquisition-app/package.json")) {
+                env.CODE_DIR = "${WORKSPACE}/acquisition-app"
+              } else {
+                error "❌ Could not locate package.json"
+              }
+            }
 
-              echo "Using WORKSPACE: $WORKSPACE"
-              ls -la "$WORKSPACE"
+            sh """
+              echo '🧹 Cleaning old node_modules...'
+              rm -rf "$CODE_DIR/node_modules" || true
+
+              echo "📍 Using CODE_DIR: $CODE_DIR"
+              ls -la "$CODE_DIR"
 
               docker run --rm -u 0:0 \
-                -v $WORKSPACE:/app \
+                -v "$CODE_DIR":/app \
                 -w /app \
                 node:18-alpine sh -c '
                   set -e
+                  echo "📦 Installing dependencies..."
                   if [ ! -f package-lock.json ]; then
-                    echo "⚠ package-lock.json missing — using npm install"
                     npm install --no-audit --no-fund
                   else
                     npm ci --no-audit --no-fund
                   fi
+                  echo "🔎 Running ESLint..."
                   npm run lint
                 '
             """
           }
         }
+
 
 
         // stage('Unit Tests') {
