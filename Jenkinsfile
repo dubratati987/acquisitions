@@ -80,11 +80,11 @@ pipeline {
       steps {
         withCredentials([file(credentialsId: 'accquisition-env-file', variable: 'ENV_FILE')]) {
           sh """
-            cp "\${ENV_FILE}" "\${GENERATED_ENV_FILE}"
+            cp "$ENV_FILE" "$GENERATED_ENV_FILE"
             echo ".env.production created (len=\$(wc -c < "\${GENERATED_ENV_FILE}"))"
 
             echo "---- .env (first 10 lines) ----"
-            head -n 10 "\${GENERATED_ENV_FILE}" || true
+            head -n 10 "$GENERATED_ENV_FILE" || true
             echo "--------------------------------"
           """
         }
