@@ -108,10 +108,8 @@ pipeline {
         stage('Lint') {
           steps {
             sh '''
-              rm -rf node_modules || true
-
               docker run --rm -u 0:0 \
-                -v "$WORKSPACE":/app -w /app \
+                -v "$WORKSPACE/acquisition-app":/app -w /app \
                 node:18-alpine sh -c "
                   set -e
                   if [ ! -f package-lock.json ]; then
@@ -127,13 +125,14 @@ pipeline {
         }
 
 
+
         stage('Unit Tests') {
           steps {
             sh '''
               rm -rf node_modules || true
 
               docker run --rm -u 0:0 \
-                -v "$WORKSPACE":/app -w /app \
+                -v "$WORKSPACE/acquisition-app":/app -w /app \
                 node:18-alpine sh -c "
                   set -e
                   if [ ! -f package-lock.json ]; then
@@ -152,7 +151,7 @@ pipeline {
           steps {
             sh '''
               docker run --rm -u 0:0 \
-                -v "$WORKSPACE":/app -w /app \
+                -v "$WORKSPACE/acquisition-app":/app -w /app \
                 node:18-alpine sh -c "
                   set -e
                   apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
