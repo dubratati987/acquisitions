@@ -179,19 +179,18 @@ pipeline {
 
     stage('Health Check') {
       steps {
-        sh """
-          echo "Health check (attempt host.docker.internal then default gateway)..."
-          # try host.docker.internal first (mac/win), fallback to Docker gateway on linux
-          if curl -sSf http://host.docker.internal:3000/health -o /dev/null; then
-            echo "Health OK via host.docker.internal"
-          elif curl -sSf http://172.17.0.1:3000/health -o /dev/null; then
-            echo "Health OK via 172.17.0.1 (docker gateway)"
-          else
-            echo "Health check failed"
-            docker compose -f "${env.WORKSPACE}/docker-compose.prod.yml" logs || true
+        echo '🩺 Running health checks...'
+        script {
+          // Test backend API
+          echo "Testing backend API..."
+          sh """
+            curl -f http://host.docker.internal:3000/health || {
+            echo '❌ Backend health check failed'
             exit 1
-          fi
-        """
+            }
+            echo '✅ Backend is healthy'
+          """
+        }
       }
     }
 
