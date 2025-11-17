@@ -200,13 +200,16 @@ pipeline {
 
     stage('Integration Tests') {
       steps {
-        sh """
-          RANDOM_EMAIL="jenkins_${env.BUILD_NUMBER}_${new Random()}@example.com"
-          echo "Creating random test user: ${RANDOM_EMAIL}"
-          curl -sSf -X POST "http://host.docker.internal:3000/api/auth/sign-up" \
-            -H "Content-Type: application/json" \
-            -d "{\\"name\\":\\"Jenkins CI Test\\",\\"email\\":\\"${RANDOM_EMAIL}\\",\\"password\\":\\"123456\\"}"
-        """
+        script {
+          def randomEmail = "jenkins_${env.BUILD_NUMBER}_${UUID.randomUUID().toString().take(8)}@example.com"
+          echo "Creating random test user: ${randomEmail}"
+
+          sh """
+            curl -sSf -X POST "http://host.docker.internal:3000/api/auth/sign-up" \
+              -H "Content-Type: application/json" \
+              -d '{ "name": "Jenkins CI Test", "email": "${randomEmail}", "password": "123456" }'
+          """
+        }
       }
     }
 
