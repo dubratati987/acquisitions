@@ -222,27 +222,32 @@ pipeline {
     stage('Multi-arch Build & Push') {
       when { expression { env.PUSH_IMAGE == 'true' } }
       steps {
-        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID,
-                                          usernameVariable: 'DOCKER_HUB_CREDENTIALS_USR',
-                                          passwordVariable: 'DOCKER_HUB_CREDENTIALS_PSW')]) {
-          sh """
+        withCredentials([usernamePassword(
+          credentialsId: env.DOCKER_CREDENTIALS_ID,
+          usernameVariable: 'DOCKER_HUB_CREDENTIALS_USR',
+          passwordVariable: 'DOCKER_HUB_CREDENTIALS_PSW'
+        )]) {
+          sh '''
             set -e
+
             echo "Logging into registry..."
             echo "$DOCKER_HUB_CREDENTIALS_PSW" | docker login -u "$DOCKER_HUB_CREDENTIALS_USR" --password-stdin
 
             builder_name="jenkins-buildx"
-            if ! docker buildx inspect ${builder_name} >/dev/null 2>&1; then
-              docker buildx create --name ${builder_name} --use
+
+            if ! docker buildx inspect "${builder_name}" >/dev/null 2>&1; then
+              docker buildx create --name "${builder_name}" --use
             else
-              docker buildx use ${builder_name}
+              docker buildx use "${builder_name}"
             fi
 
             docker buildx build --platform linux/amd64,linux/arm64 \
-              -t ${env.DOCKER_IMAGE_NAME}:${env.DOCKER_LATEST_TAG} --push "${env.WORKSPACE}"
-          """
+              -t "${DOCKER_IMAGE_NAME}:${DOCKER_LATEST_TAG}" --push "${WORKSPACE}"
+          '''
         }
       }
     }
+
 
   } // stages
 
