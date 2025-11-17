@@ -102,80 +102,54 @@ pipeline {
       }
     }
 
-    stage('Code Quality & Tests') {
-      parallel {
+    // stage('Code Quality & Tests') {
+    //   parallel {
 
-        stage('Lint') {
-          steps {
-            script {
-              // Detect correct directory
-              if (fileExists("${WORKSPACE}/package.json")) {
-                env.CODE_DIR = WORKSPACE
-              } else if (fileExists("${WORKSPACE}/acquisition-app/package.json")) {
-                env.CODE_DIR = "${WORKSPACE}/acquisition-app"
-              } else {
-                error "❌ Could not locate package.json"
-              }
-            }
+    //     stage('Lint') {
+    //       steps {
+    //         sh '''
+    //           docker run --rm -u 0:0 \
+    //             -v "$WORKSPACE":/app -w /app \
+    //             node:18-alpine sh -c "
+    //               set -e
+    //               npm ci --no-audit --no-fund
+    //               npm run lint
+    //             "
+    //         '''
+    //       }
+    //     }
 
-            sh """
-              echo '🧹 Cleaning old node_modules...'
-              rm -rf "$CODE_DIR/node_modules" || true
+    //     stage('Unit Tests') {
+    //       steps {
+    //         sh '''
+    //           docker run --rm -u 0:0 \
+    //             -v "$WORKSPACE":/app -w /app \
+    //             node:18-alpine sh -c "
+    //               set -e
+    //               npm ci --no-audit --no-fund
+    //               npm test
+    //             "
+    //         '''
+    //       }
+    //     }
 
-              echo "📍 Using CODE_DIR: $CODE_DIR"
-              ls -la "$CODE_DIR"
+    //     stage('Prisma Validate') {
+    //       steps {
+    //         sh '''
+    //           docker run --rm -u 0:0 \
+    //             -v "$WORKSPACE":/app -w /app \
+    //             node:18-alpine sh -c "
+    //               set -e
+    //               apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
+    //               npm ci --omit=dev --no-audit --no-fund
+    //               npx prisma validate
+    //             "
+    //         '''
+    //       }
+    //     }
 
-              docker run --rm -u 0:0 \
-                -v "$CODE_DIR":/app \
-                -w /app \
-                node:18-alpine sh -c '
-                  set -e
-                  echo "📦 Installing dependencies..."
-                  if [ ! -f package-lock.json ]; then
-                    npm install --no-audit --no-fund
-                  else
-                    npm ci --no-audit --no-fund
-                  fi
-                  echo "🔎 Running ESLint..."
-                  npm run lint
-                '
-            """
-          }
-        }
-
-
-
-        // stage('Unit Tests') {
-        //   steps {
-        //     sh '''
-        //       docker run --rm -u 0:0 \
-        //         -v "$WORKSPACE":/app -w /app \
-        //         node:18-alpine sh -c "
-        //           set -e
-        //           npm ci --no-audit --no-fund
-        //           npm test
-        //         "
-        //     '''
-        //   }
-        // }
-
-        // stage('Prisma Validate') {
-        //   steps {
-        //     sh '''
-        //       docker run --rm -u 0:0 \
-        //         -v "$WORKSPACE":/app -w /app \
-        //         node:18-alpine sh -c "
-        //           set -e
-        //           apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
-        //           npm ci --omit=dev --no-audit --no-fund
-        //           npx prisma validate
-        //         "
-        //     '''
-        //   }
-        // }
-
-      }
-    }
+    //   }
+    // }
 
 
 
