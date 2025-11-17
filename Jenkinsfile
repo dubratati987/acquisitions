@@ -109,38 +109,24 @@ pipeline {
           steps {
             sh '''
               docker run --rm -u 0:0 \
-                -v "$WORKSPACE/acquisition-app":/app -w /app \
+                -v "$WORKSPACE":/app -w /app \
                 node:18-alpine sh -c "
                   set -e
-                  if [ ! -f package-lock.json ]; then
-                    echo '⚠️ package-lock.json missing — using npm install'
-                    npm install --no-audit --no-fund
-                  else
-                    npm ci --no-audit --no-fund
-                  fi
+                  npm ci --no-audit --no-fund
                   npm run lint
                 "
             '''
           }
         }
 
-
-
         stage('Unit Tests') {
           steps {
             sh '''
-              rm -rf node_modules || true
-
               docker run --rm -u 0:0 \
-                -v "$WORKSPACE/acquisition-app":/app -w /app \
+                -v "$WORKSPACE":/app -w /app \
                 node:18-alpine sh -c "
                   set -e
-                  if [ ! -f package-lock.json ]; then
-                    echo '⚠️ package-lock.json missing — using npm install'
-                    npm install --no-audit --no-fund
-                  else
-                    npm ci --no-audit --no-fund
-                  fi
+                  npm ci --no-audit --no-fund
                   npm test
                 "
             '''
@@ -151,16 +137,11 @@ pipeline {
           steps {
             sh '''
               docker run --rm -u 0:0 \
-                -v "$WORKSPACE/acquisition-app":/app -w /app \
+                -v "$WORKSPACE":/app -w /app \
                 node:18-alpine sh -c "
                   set -e
                   apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
-                  if [ ! -f package-lock.json ]; then
-                    echo '⚠️ package-lock.json missing — using npm install'
-                    npm install --omit=dev --no-audit --no-fund
-                  else
-                    npm ci --omit=dev --no-audit --no-fund
-                  fi
+                  npm ci --omit=dev --no-audit --no-fund
                   npx prisma validate
                 "
             '''
@@ -169,6 +150,7 @@ pipeline {
 
       }
     }
+
 
 
 
