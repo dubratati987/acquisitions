@@ -224,13 +224,13 @@ pipeline {
     stage('Multi-arch Build & Push') {
       when { expression { env.PUSH_IMAGE == 'true' } }
       steps {
-        withCredentials([usernamePassword(credentialsId: "${env.DOCKER_CREDENTIALS_ID}",
-                                          usernameVariable: 'DOCKER_USER',
-                                          passwordVariable: 'DOCKER_PASS')]) {
+        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID,
+                                          usernameVariable: 'DOCKER_HUB_CREDENTIALS_USR',
+                                          passwordVariable: 'DOCKER_HUB_CREDENTIALS_PSW')]) {
           sh """
             set -e
             echo "Logging into registry..."
-            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            echo "$DOCKER_HUB_CREDENTIALS_PSW" | docker login -u "$DOCKER_HUB_CREDENTIALS_USR" --password-stdin
 
             builder_name="jenkins-buildx"
             if ! docker buildx inspect ${builder_name} >/dev/null 2>&1; then
