@@ -102,54 +102,55 @@ pipeline {
       }
     }
 
-    // stage('Code Quality & Tests') {
-    //   parallel {
+    stage('Code Quality & Tests') {
+      parallel {
 
-    //     stage('Lint') {
-    //       steps {
-    //         sh """
-    //           docker run --rm -u 0:0 \
-    //             -v "$WORKSPACE":/app -w /app \
-    //             node:18-alpine sh -c '
-    //               set -e
-    //               npm ci --no-audit --no-fund
-    //               npm run lint
-    //             '
-    //         """
-    //       }
-    //     }
+        stage('Lint') {
+          steps {
+            sh '''
+              docker run --rm -u 0:0 \
+                -v "$WORKSPACE":/app -w /app \
+                node:18-alpine sh -c "
+                  set -e
+                  npm ci --no-audit --no-fund
+                  npm run lint
+                "
+            '''
+          }
+        }
 
-    //     stage('Unit Tests') {
-    //       steps {
-    //         sh """
-    //           docker run --rm -u 0:0 \
-    //             -v "$WORKSPACE":/app -w /app \
-    //             node:18-alpine sh -c '
-    //               set -e
-    //               npm ci --no-audit --no-fund
-    //               npm test
-    //             '
-    //         """
-    //       }
-    //     }
+        stage('Unit Tests') {
+          steps {
+            sh '''
+              docker run --rm -u 0:0 \
+                -v "$WORKSPACE":/app -w /app \
+                node:18-alpine sh -c "
+                  set -e
+                  npm ci --no-audit --no-fund
+                  npm test
+                "
+            '''
+          }
+        }
 
-    //     stage('Prisma Validate') {
-    //       steps {
-    //         sh """
-    //           docker run --rm -u 0:0 \
-    //             -v "$WORKSPACE":/app -w /app \
-    //             node:18-alpine sh -c '
-    //               set -e
-    //               apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
-    //               npm ci --omit=dev --no-audit --no-fund
-    //               npx prisma validate
-    //             '
-    //         """
-    //       }
-    //     }
+        stage('Prisma Validate') {
+          steps {
+            sh '''
+              docker run --rm -u 0:0 \
+                -v "$WORKSPACE":/app -w /app \
+                node:18-alpine sh -c "
+                  set -e
+                  apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
+                  npm ci --omit=dev --no-audit --no-fund
+                  npx prisma validate
+                "
+            '''
+          }
+        }
 
-    //   }
-    // }
+      }
+    }
+
 
 
 
