@@ -12,7 +12,7 @@ pipeline {
     DOCKER_LATEST_TAG  = 'jenkins'
     GENERATED_ENV_FILE = "${env.WORKSPACE}/.env.production"
     PUSH_IMAGE         = 'true'
-    DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
+    DOCKER_CREDENTIALS_ID = credentials('docker-hub-credentials')
   }
 
   // options {
