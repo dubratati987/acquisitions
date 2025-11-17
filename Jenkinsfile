@@ -1,72 +1,53 @@
 pipeline {
-
+  // top-level agent must be docker-capable (has docker CLI/buildx/compose)
   agent {
     docker {
-      image 'my-node-docker-agent:18'
-      args '-v /var/run/docker.sock:/var/run/docker.sock'
+      image 'docker:24.0.7-cli'                    // official docker CLI image
+      args  '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
 
   environment {
     DOCKER_IMAGE_NAME  = 'dubratati987/docker-acquisitions'
     DOCKER_LATEST_TAG  = 'jenkins'
-    WORKSPACE_PATH     = "${env.WORKSPACE}"
     GENERATED_ENV_FILE = "${env.WORKSPACE}/.env.production"
     PUSH_IMAGE         = 'true'
     DOCKER_CREDENTIALS_ID = 'docker-hub-creds'
   }
 
+  options {
+    // keep build logs for troubleshooting
+    timestamps()
+    ansiColor('xterm')
+  }
 
   stages {
 
-    /* ---------------------------------------------------------
-     * Pre-flight (System Info + Docker checks)
-     * --------------------------------------------------------- */
     stage('Pre-flight Checks') {
       parallel {
-
         stage('System Info') {
-          agent {
-            docker {
-              image 'node:18-alpine'
-              args "-v ${WORKSPACE}:/app -w /app -v /var/run/docker.sock:/var/run/docker.sock"
-            }
-          }
           steps {
-            sh '''
-              echo "Docker version:"
-              docker --version
-
-              echo "Docker Compose version:"
-              docker compose version || docker-compose version
-
-              echo "Node version:"
-              node -v
-            '''
-          }
-        }
-
-        stage('Check Buildx') {
-          agent {
-            docker {
-              image 'node:18-alpine'
-              args "-v /var/run/docker.sock:/var/run/docker.sock"
-            }
-          }
-          steps {
-            sh '''
-              echo "Checking buildx..."
+            sh """
+              echo "---- System info (agent) ----"
+              docker --version || true
+              docker compose version || docker-compose version || true
               docker buildx version || true
-            '''
+              echo "WORKSPACE=${env.WORKSPACE}"
+            """
           }
         }
 
+        stage('Workspace sanity') {
+          steps {
+            sh """
+              echo "---- Workspace listing ----"
+              ls -la "${env.WORKSPACE}" || true
+            """
+          }
+        }
       }
     }
 
-    /* ---------------------------------------------------------
-     * Matrix Quick Test
-     * --------------------------------------------------------- */
     stage('Matrix Quick Test') {
       matrix {
         axes {
@@ -78,235 +59,204 @@ pipeline {
         stages {
           stage('Quick Node Test') {
             steps {
-              sh '''
-                echo "Testing Node ${NODE_VERSION} using docker run..."
+              sh """
+                echo "Running quick Node ${NODE_VERSION} check by launching ephemeral node container..."
                 docker run --rm node:${NODE_VERSION} node -v
-              '''
+              """
             }
           }
         }
       }
     }
 
-    /* ---------------------------------------------------------
-     * Checkout source code
-     * --------------------------------------------------------- */
     stage('Checkout Code') {
-      agent any
       steps {
+        // Use default SCM checkout (declarative) or explicit git:
         git branch: 'main', url: 'https://github.com/dubratati987/acquisitions.git'
       }
     }
 
-    /* ---------------------------------------------------------
-     * Prepare .env.production file
-     * --------------------------------------------------------- */
     stage('Prepare .env') {
-      agent any
       steps {
         withCredentials([file(credentialsId: 'accquisition-env-file', variable: 'ENV_FILE')]) {
-          sh '''
-            cp "$ENV_FILE" "$GENERATED_ENV_FILE"
-            echo ".env.production created"
-          '''
+          sh """
+            cp "${ENV_FILE}" "${GENERATED_ENV_FILE}"
+            echo ".env.production created (len=$(wc -c < \"${GENERATED_ENV_FILE}\"))"
+            # show safe preview (first 10 lines)
+            printf '%s\\n' '---- .env.production (head) ----'
+            head -n 10 "${GENERATED_ENV_FILE}" || true
+            printf '%s\\n' '--------------------------------'
+          """
         }
       }
     }
 
-    /* ---------------------------------------------------------
-     * Debug workspace
-     * --------------------------------------------------------- */
     stage('Debug Workspace') {
-      agent any
       steps {
-        sh '''
-          echo "---- LIST workspace -----"
-          ls -R "$WORKSPACE"
-          echo "-------------------------"
-        '''
+        sh """
+          echo "---- FULL workspace tree ----"
+          ls -R "${env.WORKSPACE}"
+          echo "-----------------------------"
+        """
       }
     }
 
-    /* ---------------------------------------------------------
-     * Code Quality (Lint, Unit Tests, Prisma Validate)
-     * --------------------------------------------------------- */
     stage('Code Quality & Tests') {
       parallel {
 
-        /* Lint ----------------------------------------------- */
         stage('Lint') {
-          agent {
-            docker {
-              image 'node:18-alpine'
-              args "-v ${WORKSPACE}:/app -w /app"
-            }
-          }
           steps {
-            sh '''
-              npm ci
-              npm run lint
-            '''
+            // run npm inside ephemeral Node container (avoids overlayfs issues)
+            sh """
+              echo "Running lint in ephemeral node container..."
+              docker run --rm -u 0:0 \
+                -v "${env.WORKSPACE}":/app -w /app \
+                node:18-alpine sh -c '
+                  set -e
+                  npm ci --no-audit --no-fund
+                  npm run lint
+                '
+            """
           }
         }
 
-        /* Unit Tests ----------------------------------------- */
         stage('Unit Tests') {
-          agent {
-            docker {
-              image 'node:18-alpine'
-              args "-v ${WORKSPACE}:/app -w /app"
-            }
-          }
           steps {
-            sh '''
-              npm ci
-              npm test
-            '''
+            sh """
+              echo "Running unit tests in ephemeral node container..."
+              docker run --rm -u 0:0 \
+                -v "${env.WORKSPACE}":/app -w /app \
+                node:18-alpine sh -c '
+                  set -e
+                  npm ci --no-audit --no-fund
+                  npm test
+                '
+            """
           }
         }
 
-        /* Prisma Validate ------------------------------------ */
         stage('Prisma Validate') {
-          agent {
-            docker {
-              image 'node:18-alpine'
-              args "-v ${WORKSPACE}:/app -w /app"
-            }
-          }
           steps {
-            sh '''
-              apk add --no-cache python3 make g++ >/dev/null 2>&1
-              npm ci --omit=dev
-              npx prisma validate --schema=prisma/schema.prisma
-            '''
+            sh """
+              echo "Validating Prisma schema in ephemeral node container..."
+              docker run --rm -u 0:0 \
+                -v "${env.WORKSPACE}":/app -w /app \
+                node:18-alpine sh -c '
+                  set -e
+                  apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
+                  npm ci --omit=dev --no-audit --no-fund
+                  npx prisma validate --schema=prisma/schema.prisma
+                '
+            """
           }
         }
 
       }
     }
 
-    /* ---------------------------------------------------------
-     * Build Docker image locally
-     * --------------------------------------------------------- */
-    stage('Build Docker Image (local)') {
-      agent any
+    stage('Build Docker Image (compose build)') {
       steps {
-        sh '''
-          echo "Building Docker image using compose..."
-          docker compose -f docker-compose.prod.yml build --no-cache
-        '''
+        sh """
+          echo "Building with docker compose (prod)..."
+          # use mounted workspace on host; compose file is in workspace
+          docker compose -f "${env.WORKSPACE}/docker-compose.prod.yml" build --no-cache
+        """
       }
     }
 
-    /* ---------------------------------------------------------
-     * Start services
-     * --------------------------------------------------------- */
     stage('Start Application Services') {
-      agent any
       steps {
-        sh '''
-          docker compose -f docker-compose.prod.yml up -d
-          echo "Waiting 25 seconds..."
+        sh """
+          echo "Starting services (compose up -d)..."
+          docker compose -f "${env.WORKSPACE}/docker-compose.prod.yml" up -d
+          echo "Waiting for services to start..."
           sleep 25
-          docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
-        '''
+          docker ps --format "table {{.Names}}\\t{{.Image}}\\t{{.Status}}\\t{{.Ports}}"
+        """
       }
     }
 
-    /* ---------------------------------------------------------
-     * Health Check
-     * --------------------------------------------------------- */
     stage('Health Check') {
-      agent any
       steps {
-        sh '''
-          echo "Running health check..."
-          curl -f http://host.docker.internal:3000/health
-          echo "Health OK"
-        '''
+        sh """
+          echo "Health check (attempt host.docker.internal then default gateway)..."
+          # try host.docker.internal first (mac/win), fallback to Docker gateway on linux
+          if curl -sSf http://host.docker.internal:3000/health -o /dev/null; then
+            echo "Health OK via host.docker.internal"
+          elif curl -sSf http://172.17.0.1:3000/health -o /dev/null; then
+            echo "Health OK via 172.17.0.1 (docker gateway)"
+          else
+            echo "Health check failed"
+            docker compose -f "${env.WORKSPACE}/docker-compose.prod.yml" logs || true
+            exit 1
+          fi
+        """
       }
     }
 
-    /* ---------------------------------------------------------
-     * Integration Tests
-     * --------------------------------------------------------- */
     stage('Integration Tests') {
-      agent any
       steps {
-        sh '''
+        sh """
           RANDOM_EMAIL="jenkins_${BUILD_NUMBER}_$RANDOM@example.com"
-
-          curl -X POST "http://host.docker.internal:3000/api/auth/sign-up" \
+          echo "Creating random test user: ${RANDOM_EMAIL}"
+          curl -sSf -X POST "http://host.docker.internal:3000/api/auth/sign-up" \
             -H "Content-Type: application/json" \
-            -d "{\\"name\\":\\"Jenkins CI Test\\",\\"email\\":\\"$RANDOM_EMAIL\\",\\"password\\":\\"123456\\"}" -f
-        '''
+            -d "{\\"name\\":\\"Jenkins CI Test\\",\\"email\\":\\"${RANDOM_EMAIL}\\",\\"password\\":\\"123456\\"}"
+        """
       }
     }
 
-    /* ---------------------------------------------------------
-     * Performance Check
-     * --------------------------------------------------------- */
     stage('Performance Check') {
-      agent any
       steps {
-        sh '''
-          curl -w "⏱ Time: %{time_total}s\\n" -o /dev/null -s http://host.docker.internal:3000/api/users
-        '''
+        sh """
+          curl -w "⏱ Time: %{time_total}s\\n" -o /dev/null -s http://host.docker.internal:3000/api/users || true
+        """
       }
     }
 
-    /* ---------------------------------------------------------
-     * Multi-arch Build + Push
-     * --------------------------------------------------------- */
     stage('Multi-arch Build & Push') {
       when { expression { env.PUSH_IMAGE == 'true' } }
-      agent any
       steps {
         withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID,
                                           usernameVariable: 'DOCKER_USER',
                                           passwordVariable: 'DOCKER_PASS')]) {
-
-          sh '''
+          sh """
+            set -e
+            echo "Logging into registry..."
             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
             builder_name="jenkins-buildx"
-
             if ! docker buildx inspect ${builder_name} >/dev/null 2>&1; then
               docker buildx create --name ${builder_name} --use
             else
               docker buildx use ${builder_name}
             fi
 
-            docker buildx build \
-              --platform linux/amd64,linux/arm64 \
-              -t ${DOCKER_IMAGE_NAME}:${DOCKER_LATEST_TAG} \
-              --push .
-          '''
+            docker buildx build --platform linux/amd64,linux/arm64 \
+              -t ${env.DOCKER_IMAGE_NAME}:${env.DOCKER_LATEST_TAG} --push "${env.WORKSPACE}"
+          """
         }
       }
     }
 
   } // stages
 
-  /* ---------------------------------------------------------
-   * Cleanup
-   * --------------------------------------------------------- */
   post {
     always {
-      sh '''
-        echo "Stopping services..."
-        docker compose -f docker-compose.prod.yml down || true
+      sh """
+        echo "Cleaning up (compose down)..."
+        docker compose -f "${env.WORKSPACE}/docker-compose.prod.yml" down || true
         docker image prune -f || true
-      '''
+      """
     }
     success {
-      echo "✅ Pipeline succeeded"
+      echo "✅ Pipeline finished successfully"
     }
     failure {
-      sh '''
-        echo "❌ Pipeline failed — showing logs"
-        docker compose -f docker-compose.prod.yml logs || true
-      '''
+      sh """
+        echo "❌ Pipeline failed — collecting logs"
+        docker compose -f "${env.WORKSPACE}/docker-compose.prod.yml" logs || true
+      """
     }
   }
 }
