@@ -12,7 +12,7 @@ pipeline {
     DOCKER_LATEST_TAG  = 'jenkins'
     GENERATED_ENV_FILE = "${env.WORKSPACE}/.env.production"
     PUSH_IMAGE         = 'true'
-    DOCKER_CREDENTIALS_ID = credentials('docker-hub-credentials')
+    DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
   }
 
   // options {
@@ -107,11 +107,9 @@ pipeline {
 
     //     stage('Lint') {
     //       steps {
-    //         // run npm inside ephemeral Node container (avoids overlayfs issues)
     //         sh """
-    //           echo "Running lint in ephemeral node container..."
     //           docker run --rm -u 0:0 \
-    //             -v "${env.WORKSPACE}":/app -w /app \
+    //             -v "$WORKSPACE":/app -w /app \
     //             node:18-alpine sh -c '
     //               set -e
     //               npm ci --no-audit --no-fund
@@ -124,9 +122,8 @@ pipeline {
     //     stage('Unit Tests') {
     //       steps {
     //         sh """
-    //           echo "Running unit tests in ephemeral node container..."
     //           docker run --rm -u 0:0 \
-    //             -v "${env.WORKSPACE}":/app -w /app \
+    //             -v "$WORKSPACE":/app -w /app \
     //             node:18-alpine sh -c '
     //               set -e
     //               npm ci --no-audit --no-fund
@@ -139,14 +136,13 @@ pipeline {
     //     stage('Prisma Validate') {
     //       steps {
     //         sh """
-    //           echo "Validating Prisma schema in ephemeral node container..."
     //           docker run --rm -u 0:0 \
-    //             -v "${env.WORKSPACE}":/app -w /app \
+    //             -v "$WORKSPACE":/app -w /app \
     //             node:18-alpine sh -c '
     //               set -e
     //               apk add --no-cache python3 make g++ >/dev/null 2>&1 || true
     //               npm ci --omit=dev --no-audit --no-fund
-    //               npx prisma validate --schema=prisma/schema.prisma
+    //               npx prisma validate
     //             '
     //         """
     //       }
@@ -154,6 +150,8 @@ pipeline {
 
     //   }
     // }
+
+
 
     stage('Build Docker Image (compose build)') {
       steps {
