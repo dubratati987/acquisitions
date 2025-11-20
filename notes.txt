@@ -146,3 +146,150 @@
     testEnvironment: "node",
 
 
+4. To run a docker image with volume mount in windows host machine
+    docker run -p 5173:5173 -e CHOKIDAR_USEPOLLING=true -e WATCHPACK_POLLING=true -v "${PWD}:/app" -v /app/node_modules vite-project
+
+
+5. docker compose up --build
+    docker tag kubernetes-demo-api:latest dubratati987/docker-acquisitions:latest
+     docker push dubratati987/kubernetes-demo-api:latest 
+
+
+6. Create docker image from terminal
+    docker-compose -f docker-compose.local.yml up -d --build <service name, for example: app> 
+
+
+---------------------------------------------------------------------------
+
+docker
+======
+
+1. Build docker image from current docker context
+
+    docker build -t acquisitions-app:local .
+
+
+2. Build docker image from docker compose
+
+    docker-compose -f docker-compose.local.yml build app
+    docker tag acquisitions-app:latest acquisitions-app:local
+
+
+
+How to prepare base64 of a string
+=================================
+
+Open WSL
+
+In terminal write down
+
+echo -n "random value" | base64
+
+
+
+
+Minikube
+========
+
+1. Start Minikube   
+        minikube Start
+
+2. Enable Ingress
+        minikube addons enable ingress
+
+3. Check if ingress enabled 
+        kubectl get pods -n ingress-nginx 
+
+2. Create bridg between your machine and Kubernetes cluster
+        minikube tunnel
+
+3. Load docker image into minikube  
+        minikube image load acquisitions-app:latest 
+
+3. Minikube list image  
+        minikube image ls
+
+
+kubectl
+=======
+
+1. Apply yaml file for configmap
+        kubectl apply -f k8s/configmap.yaml
+
+2. Get config map
+        kubectl -n acquisition get configmap app-config -o yaml
+
+3. Apply yaml file for secret   
+        kubectl apply -f k8s/secret.yaml
+
+4. Get secret
+        kubectl -n acquisition get secret app-secret -o yaml
+
+
+3. Apply yaml file in kubctl
+        kubectl apply -f k8s/01-postgress.yaml
+
+4. Delete objects in kubectl from yaml file
+        kubectl delete -f k8s/01-postgress.yaml
+
+5. Get all namespace
+        kubectl get namespace
+
+4. Get all services in kubectl
+        kubectl -n acquisition get pod,svc -o wide
+
+        OR
+
+        kubectl -n acquisition get svc -l app=backend -o wide
+
+4. Get all in progress POD
+        kubectl -n acquisition wait --for=condition=ready pod -l app=backend --timeout=180s
+
+4. Get PODs
+        kubectl get pods -n acquisition -o wide
+        OR
+        kubectl -n acquisition get pod -l app=backend -o wide
+
+5. Describe POD
+        kubectl -n acquisition describe pod -l app=backend
+
+5. Get POD logs 
+        kubectl logs -n acquisition <pod name> -f
+
+6. Shell acces to POD
+        kubectl exec -it <pod name> -n acquisition -- sh
+
+
+7. Port forward of minikube
+        kubectl -n acquisition port-forward svc/backend 3000:3000
+
+
+
+If need to debug migration
+-------------------------
+kubectl -n acquisition get pod -l app=backend -o wide
+kubectl -n acquisition logs <pod name> -c migrate
+
+
+
+How to run
+-----------
+Open 3 terminals
+
+In terminal: 1 => Start minkube tunnel
+    1. minikube Start
+
+    2. minikube tunnel
+
+In terminal: 2 => PORT forward
+
+    kubectl -n acquisition port-forward svc/backend 3000:3000
+    
+In terminal: 3 => check log
+
+    
+    1. kubectl -n acquisition get pod -l app=backend -o wide
+
+    2. kubectl -n acquisition logs <pod name> -f
+
+

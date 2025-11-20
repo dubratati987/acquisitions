@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-deployment
+  namespace: acquisition
+  labels:
+    app: db-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db # POD name that will be handled by replicaset
+  template: # Template to create the POD
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: postgresql
+          image: postgres:16.0-bullseye
+          ports:
+            - containerPort: 5432 # INSIDE container app → listens on port 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: 'acquisition_password'
+            - name: POSTGRES_USER
+              value: 'acquisition_db_user'
+            - name: POSTGRES_DB
+              value: 'acquisition_db'
+          volumeMounts:
+            - name: postgress-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgress-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgress
+  namespace: acquisition
+spec:
+  selector:
+    app: db # POD name that will be handled by replicaset
+  ports:
+    - protocol: TCP
+      port: 5432 # Service receives traffic on 5432
+      targetPort: 5432 # Then forwards to POD on 5432
+  type: ClusterIP # Exposes a stable IP inside a cluster

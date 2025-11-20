@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: acquisitions-app-local
+    ports:
+      - '${PORT:-3000}:3000'
+    env_file:
+      - .env.local
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16.0-bullseye
+    container_name: acquisition-db-local
+    environment:
+      POSTGRES_USER: acquisition_db_user
+      POSTGRES_PASSWORD: acquisition_password
+      POSTGRES_DB: acquisition_db
+    ports:
+      - 5432:5432
+    volumes:
+      - pg_acquisitions_data:/var/lib/postgresql/data
+
+networks:
+  acquisitions-local:
+    driver: bridge
+
+volumes:
+  pg_acquisitions_data:

@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: acquisition
+  labels:
+    app: backend-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend # POD name that will be handled by replicaset
+  template: # Template to create the POD
+    metadata:
+      labels:
+        app: backend
+    spec:
+      # --- INIT CONTAINER ---
+      initContainers:
+        - name: migrate
+          image: acquisitions-app:latest # MUST MATCH backend image
+          imagePullPolicy: IfNotPresent
+          command: ['npx', 'prisma', 'migrate', 'deploy']
+          securityContext:
+            runAsUser: 0 # RUN AS ROOT (important)
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_DB
+            - name: DATABASE_URL
+              value: 'postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgress:5432/${POSTGRES_DB}?schema=public'
+
+      # --- MAIN APP CONTAINER ---
+      containers:
+        - name: backend
+          image: acquisitions-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432 # INSIDE container app → listens on port 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_DB
+            - name: DATABASE_URL
+              value: 'postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgress:5432/${POSTGRES_DB}?schema=public'
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: PORT
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: NODE_ENV
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: LOG_LEVEL
+            - name: ARCJET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: ARCJET_KEY
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: JWT_SECRET
+          readinessProbe: # Only ready pods are added to service endpoints
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe: # Tell kubelet whether container is alive or not
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: acquisition
+spec:
+  selector:
+    app: backend # POD name that will be handled by replicaset
+  ports:
+    - protocol: TCP
+      port: 3000 # Service receives traffic on 5432
+      targetPort: 3000 # Then forwards to POD on 5432
+  type: ClusterIP # Exposes a stable IP inside a cluster
