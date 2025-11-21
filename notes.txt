@@ -206,6 +206,9 @@ Minikube
 3. Load docker image into minikube  
         minikube image load acquisitions-app:latest 
 
+4. Delete docker image from minikube
+        minikube image rm acquisitions-app:latest 2>$null
+
 3. Minikube list image  
         minikube image ls
 
@@ -298,7 +301,17 @@ kubectl
 
 18. If PVC is being used
         kubectl -n acquisition get pvc
-        
+
+
+Other notes
+===========
+1. Delete the namespace and everything inside it (full cleanup).
+kubectl delete namespace acquisition
+
+2. Delete pvc
+kubectl -n devops-part3 delete pvc --all
+
+
 
 
 If need to debug migration
