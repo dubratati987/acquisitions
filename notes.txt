@@ -210,6 +210,12 @@ Minikube
         minikube image ls
 
 
+3. Minikube dashboard access
+         minikube dashboard
+
+          minikube addons enable metrics-server
+
+
 kubectl
 =======
 
@@ -263,6 +269,36 @@ kubectl
 7. Port forward of minikube
         kubectl -n acquisition port-forward svc/backend 3000:3000
 
+8. Apply ingress        
+        kubectl apply -f k8s/04-ingress.yaml
+
+9. Go to Windows\System32\drivers\etc and following at end of file
+        127.0.0.1       appdemo.local
+
+10. Get ingress
+        kubectl -n acquisition get ingress
+
+11. Describe ingress
+        kubectl -n acquisition describe ingress <name>
+
+13. Get services that using load balancer/ NodePort
+        kubectl -n acquisition get svc -A | grep NodePort
+
+14. To delete a pod
+        kubectl -n acquisition delete pod -l app=db
+
+15. To apply persistant volume claim
+        kubectl apply -f .\k8s\postgress-pvc.yaml
+
+16. To restart deployment
+        kubectl -n acquisition rollout restart deploy/db-deployment
+
+17. To check deployment rollout status
+        kubectl -n acquisition rollout status deploy/db-deployment
+
+18. If PVC is being used
+        kubectl -n acquisition get pvc
+        
 
 
 If need to debug migration
@@ -277,7 +313,7 @@ How to run
 Open 3 terminals
 
 In terminal: 1 => Start minkube tunnel
-    1. minikube Start
+    1. minikube start
 
     2. minikube tunnel
 
@@ -293,3 +329,8 @@ In terminal: 3 => check log
     2. kubectl -n acquisition logs <pod name> -f
 
 
+----------------------
+
+
+To create base64 encoded string type in WSL command line
+echo -n 'acquisition_password' | base64

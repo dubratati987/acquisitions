@@ -119,4 +119,5 @@ spec:
     - protocol: TCP
       port: 3000 # Service receives traffic on 5432
       targetPort: 3000 # Then forwards to POD on 5432
-  type: ClusterIP # Exposes a stable IP inside a cluster
+  # type: ClusterIP # Exposes a stable IP inside a cluster
+  type: NodePort # or LoadBalancer (preferred for tunnel)
