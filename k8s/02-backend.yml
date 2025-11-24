@@ -61,6 +61,14 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             failureThreshold: 3
+          resources:
+            # HPA needs requests to calculate CPU utilization:
+            requests: # CPU Request => Baseline resource the HPA measures percentage against
+              cpu: '100m' # Minimum CPU guaranteed
+              memory: '256Mi' # Minimum memory guaranteed
+            limits: # CPU Limits => Prevent the container from overloading the node
+              cpu: '500m' # Max CPU allowed before throttling
+              memory: '512Mi' # Max memory allowed
 ---
 apiVersion: v1
 kind: Service

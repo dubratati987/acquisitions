@@ -192,7 +192,7 @@ Minikube
 ========
 
 1. Start Minikube   
-        minikube Start
+        minikube start
 
 2. Enable Ingress
         minikube addons enable ingress
@@ -302,6 +302,83 @@ kubectl
 18. If PVC is being used
         kubectl -n acquisition get pvc
 
+19. Requirement for HPA in Minikube 
+You must enable the Metrics Server.
+Because HPA relies on real-time CPU/memory metrics to decide scaling.
+Check if it exists:
+
+        kubectl get deployment -n kube-system | grep metrics
+
+
+If nothing shows → enable it:
+
+        minikube addons enable metrics-server
+
+
+Wait a few seconds, then verify metrics are working:
+        kubectl get deployment -n kube-system metrics-server
+
+        For Windows
+        kubectl get apiservice | Select-String metrics
+        OR
+        For Mac or Linux
+        kubectl get apiservice | grep metrics
+
+
+        kubectl top pods -n acquisition
+
+
+
+If you see CPU/MEM usage → You’re good 👍
+
+
+19. To apply horizontal pod autoscaling
+        kubectl apply -f k8s/05-autoscale.yaml
+
+20. To check Horizontal pod autoscaling
+        kubectl -n acquisition get hpa
+
+21. Describe Horizontal pod autoscaling
+        kubectl -n acquisition describe hpa <hpa name>
+
+22. To Horizontal Pod autoscale 
+        kubectl -n acquisition top pods
+
+23. Load test to trigger scaling:
+        kubectl run load-generator --image=busybox -- /bin/sh -c "while true; do wget -q -O- http://web-app-service; done"
+
+
+        Optional Load Test to Trigger Scaling 🚀
+
+        Use this command inside one pod:
+
+        kubectl -n acquisition exec -it deploy/backend-deployment -- sh -c "yes > /dev/null"
+
+
+Then watch scaling:
+
+kubectl -n acquisition get hpa -w
+
+
+You will then see replicas increase from 2 → 3 → 4 → ... until CPU usage drops again.
+
+
+24. Trigger load test
+
+        kubectl run -n acquisition load-generator --image=busybox -- /bin/sh -c "while true; do wget -q -O- http://backend:3000/health; done"
+
+    Watch autoscaleing
+        kubectl get pods -n acquisition --watch
+
+
+        delete load generator
+
+        kubectl delete pod load-generator -n acquisition
+
+
+
+
+
 
 Other notes
 ===========
@@ -309,7 +386,7 @@ Other notes
 kubectl delete namespace acquisition
 
 2. Delete pvc
-kubectl -n devops-part3 delete pvc --all
+kubectl -n acquisition delete pvc --all
 
 
 

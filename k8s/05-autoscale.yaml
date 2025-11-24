@@ -1,0 +1,19 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: acquisition
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-deployment # Deployment name is backend-deployment
+  minReplicas: 2 # Never go below 2 Pods
+  maxReplicas: 10 # Never exceed 10 Pods
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu # Metric type is CPU usage, watching cpu consumption of Pods
+        target:
+          type: Utilization # Utilization = percentage of requested CPU
+          averageUtilization: 70 # If average CPU usage across Pods > 70%, scale up, If CPU usage < 70%, scale down
